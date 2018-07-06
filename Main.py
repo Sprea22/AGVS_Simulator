@@ -11,7 +11,7 @@ from Load_Transfer import *
 
 width = 50
 height = 50
-populationSize = 3
+populationSize = 2
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
@@ -21,10 +21,12 @@ def init():
     agents = []
     states = ["Free", "Next_Goal", "Ongoing", "Loading", "Returning", "Unloading"]
 
+    agents.append(AGV((30,30)))
+    agents.append(AGV((10,10)))
     # Initializing the agents
-    for i in range(populationSize):
-        newAgent = AGV((i*8,1))
-        agents.append(newAgent)
+    #for i in range(populationSize):
+    #    newAgent = AGV((i*8,5))
+    #    agents.append(newAgent)
 
     # Initilizing the environement
     envir = envir_configuration(width, height)
@@ -52,12 +54,18 @@ def draw():
         for x_idx, val_cell in enumerate(row):
             if(val_cell == 0.01): # Wall
                 pl.scatter(x_idx + 0.5, y_idx + 0.5, marker = "s", c = 'gray', cmap = pl.cm.binary)
-            elif(val_cell == 0.03): # Intention
-                pl.scatter(x_idx + 0.5, y_idx + 0.5, marker = "s", c = 'skyblue', cmap = pl.cm.binary)
             elif(val_cell == 0.04): # Goal
                 pl.scatter(x_idx + 0.5, y_idx + 0.5, marker = "x", c = 'green', cmap = pl.cm.binary)
+            elif(val_cell == 0.03): # Intention
+                pl.scatter(x_idx + 0.5, y_idx + 0.5, marker = "s", c = 'skyblue', cmap = pl.cm.binary)
             elif(val_cell == 0.02): # Agent
-                pl.scatter(x_idx + 0.5, y_idx + 0.5,               c = 'darkblue', cmap = pl.cm.binary)
+                # ag in agents che ha x_idx e y_idx come posizione ag.color
+                for ag in agents:
+                    if(ag.get_X() == x_idx and ag.get_Y() == y_idx):
+                        pl.scatter(x_idx + 0.5, y_idx + 0.5, c = ag.color, cmap = pl.cm.binary)
+                        #x_idx = ag.get_intent()[0]
+                        #y_idx = ag.get_intent()[1]
+                        #pl.scatter(x_idx + 0.5, y_idx + 0.5, c = ag.color, cmap = pl.cm.binary)
     pl.hold(False)
     pl.title('t = ' + str(time))
 
@@ -86,6 +94,7 @@ def step():
         elif(ag.state == "Ongoing"):
             # Moving to the goal
             if(len(ag.path) > 0):
+                ag.path = ag.conflict_handler(envir)
                 ag.pos = ag.path[0]
                 ag.path.pop(0)
             # Reached the goal
@@ -102,6 +111,7 @@ def step():
         elif(ag.state == "Returning"):
             # Moving to the goal
             if(len(ag.path) > 0):
+                ag.path = ag.conflict_handler(envir)
                 ag.pos = ag.path[0]
                 ag.path.pop(0)
             # Reached the goal
