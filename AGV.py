@@ -1,9 +1,11 @@
+import numpy as np
+
 class AGV:
     #variabili comuni alle istanze della clase
-    time = 1
     state = "Free"
     path = []
     goal = []
+    gate = []
 
     #costruttore
     def __init__(self, pos):
@@ -16,29 +18,24 @@ class AGV:
     def get_Y(self):
         return self.pos[1]
 
-'''
-    #metodo
-    def add_path(self, step):
-        self.path.append(step)
+    def get_next_goal(self):
+        if(self.goal != [] and self.goal[0] != [0,0]):
+            return self.goal[0]
+        else:
+            return []
 
+    def update_envir(self, envir):
+        print("POSITION |", self.pos)
+        print("PATH |", self.path)
+        print("GOAL |", self.goal)
 
-#---------------------------
-#           MAIN
-#---------------------------
+        envir[self.pos[::-1]] = 0.02
 
-x = AGV([0,0],[5,5])
+        if(len(self.path) > 0):
+            envir[self.path[0][::-1]] = 0.03
+            if(len(self.path) > 1):
+                envir[self.path[1][::-1]] = 0.03
 
-#accedere al valore dei parametri
-
-print x.init_state
-print "-----------"
-print x.pos
-print "-----------"
-
-#chiamare i metodi
-x.add_path(8)
-x.add_path(4)
-x.add_path(12)
-
-print x.path
-'''
+        if(len(self.goal) != 0):
+            envir[self.goal[0][::-1]] = 0.04
+        return envir
