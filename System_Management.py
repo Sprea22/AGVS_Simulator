@@ -23,7 +23,8 @@ def getGoals(orders_list):
         return [], orders_list
 
 def order_location(ind):
-    map_locations = {"shoes": (10, 10), "tshirt" : (30, 30), "pullover" : (20,20), "hat" : (2,30)}
+    map_locations = {"shoes": (10, 10), "tshirt" : (10, 10), "pullover" : (20,20), "hat" : (2,30)}
+    #map_locations = {"shoes": (10, 10), "tshirt" : (20, 10), "pullover" : (20,20), "hat" : (2,30)}
     for i in map_locations.keys():
         if(i == ind):
             return map_locations[i]
