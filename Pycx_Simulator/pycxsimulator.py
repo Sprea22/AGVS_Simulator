@@ -53,7 +53,6 @@ class GUI:
         self.titleText = title
         self.timeInterval = interval
         self.stepSize = stepSize
-        print("------------", parameterSetters)
         self.parameterSetters = parameterSetters
         self.varEntries = {}
         self.statusStr = ""

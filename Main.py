@@ -43,10 +43,10 @@ def init():
         agents.append(AGV((28, 34),"magenta"))
 
     else:
-        print "Error - State is not existing."
+        print("Error - State is not existing.")
 
     # Initilizing the environement
-    envir = envir_configuration(width, height)
+    envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ def step():
                 ag.state = "To_Home"
             else:
                 #QUI DECIDIAMO COSA FARE PERCHe' I ROBOTTINI SONO IN BUSY WAIT
-                print "plz kill meeeee I'm slowly starvinggggg ahhhhhhhhh"
+                print("plz kill meeeee I'm slowly starvinggggg ahhhhhhhhh")
         elif(ag.state == "To_Home"):
             if(len(ag.path) > 0):
                 ag.path = ag.conflict_handler(envir)
@@ -145,7 +145,7 @@ def step():
                 ag.state = "Home"
 
         else:
-            print "Error - State is not existing."
+            print("Error - State is not existing.")
 
         # The agent update the Environment with its location and its intention
         #envir = ag.update_envir(envir, old_params)

@@ -29,13 +29,13 @@ def getGoals(orders_list, behavior_type):
 
     elif(behavior_type == 2):
         if(len(orders_list) != 0):
-
+            print("")
         else:
             print("All the orders are correctly done!")
             return [], orders_list
 
     else:
-        print "Error - State is not existing."
+        print("Error - State is not existing.")
 
 def order_location(ind):
     map_locations = {"shoes": (10,5), "tshirt" : (28,13), "pullover" : (11,43), "hat" : (45,32)}
