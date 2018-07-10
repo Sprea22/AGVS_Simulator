@@ -10,8 +10,6 @@ class AGV:
     goal = []
     gate = []
 
-
-
     #costruttore
     def __init__(self, pos, color):
         #variabili che cambiano per ogni istanza
@@ -34,8 +32,6 @@ class AGV:
             return self.goal[0]
         else:
             return []
-
-
 
 #######################################################################
 ###### Conflict Handler method ######

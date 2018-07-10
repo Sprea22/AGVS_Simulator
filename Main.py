@@ -1,6 +1,8 @@
 import matplotlib
-matplotlib.use('TkAgg')
 import pylab as pl
+import warnings
+matplotlib.use('TkAgg')
+warnings.filterwarnings("ignore")
 
 # Functions
 from Environment_Conf import *
@@ -11,23 +13,18 @@ from Load_Transfer import *
 
 width = 50
 height = 50
+behavior_type = 1
 
-wall_x = list(range(8, 12))*35 + list(range(18, 22))*35 + list(range(28, 32))*35 + list(range(38, 42))*35
-wall_y = [range(10,45)] * 16
-
-#wall_x = [5] * 30
-#wall_y = [range(0,30)]
-
-gate_x =  list(range(9, 14)) + list(range(23, 28)) + list(range(37, 42))
-gate_y = [0] * len(gate_x)
-
-#populationSize = 2
-
+def behavior_typeF (val=behavior_type):
+    global behavior_type
+    behavior_type = int(val)
+    return val
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
     global time, agents, envir, states, orders_list
+    global wall_x, wall_y, gate_x, gate_y
 
     orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
     time = 0
@@ -37,13 +34,9 @@ def init():
     agents.append(AGV((5, 5),"red"))
     agents.append(AGV((5, 10),"magenta"))
 
-    # Initializing the agents
-    #for i in range(populationSize):
-    #    newAgent = AGV((i*8,5))
-    #    agents.append(newAgent)
-
     # Initilizing the environement
-    envir = envir_configuration(width, height)
+    envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
+
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -80,9 +73,7 @@ def step():
     time += 1
 
     for ag in agents:
-        print(sum(sum(envir)))
         envir = envir_reset(ag, envir)
-        print(sum(sum(envir)))
 
         if(ag.state == "Free"):
             ag.goal, orders_list = new_goal(orders_list)
@@ -135,4 +126,5 @@ def step():
 
 #------------------------------------------------------------------------------
 from Pycx_Simulator import pycxsimulator
-pycxsimulator.GUI().start(func=[init,draw,step])
+pSetters = [behavior_typeF]
+pycxsimulator.GUI(parameterSetters = pSetters).start(func=[init,draw,step])

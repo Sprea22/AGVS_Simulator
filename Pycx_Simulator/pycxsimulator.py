@@ -27,16 +27,21 @@
 ## matplotlib.use('TkAgg')
 
 import pylab as PL
-import tkinter
 import numpy as np
+
+# Python 2 #
+#import Tkinter
+#from Tkinter import *
+#from ttk import *
+# Python 3 #
+import tkinter
 from tkinter import *
 from tkinter.ttk import Notebook
 
 
 class GUI:
-
     ## GUI variables
-    titleText = 'PyCX Simulator'  # window title
+    titleText = 'AGVS Simulator'  # window title
     timeInterval = 0              # refresh time in milliseconds
     running = False
     modelFigure = None
@@ -44,10 +49,11 @@ class GUI:
     currentStep = 0
 
     # Constructor
-    def __init__(self, title='PyCX Simulator', interval=0, stepSize=1, parameterSetters=[]):
+    def __init__(self, title='AGVS Simulator', interval=0, stepSize=1, parameterSetters=[]):
         self.titleText = title
         self.timeInterval = interval
         self.stepSize = stepSize
+        print("------------", parameterSetters)
         self.parameterSetters = parameterSetters
         self.varEntries = {}
         self.statusStr = ""
@@ -58,40 +64,39 @@ class GUI:
     # Initialization
     def initGUI(self):
 
-        #create root window
+        #### #### #### #### #### #### ##
+        ####  INITIALIZING THE GUI   ###
+        #### #### #### #### #### #### ##
         self.rootWindow = Tk()
         self.statusText = StringVar(value=self.statusStr) # at this point, statusStr = ""
         self.setStatusStr("Simulation not yet started")
-
-        self.rootWindow.wm_title(self.titleText) # titleText = 'PyCX Simulator'
+        self.rootWindow.wm_title(self.titleText)
         self.rootWindow.protocol('WM_DELETE_WINDOW', self.quitGUI)
         self.rootWindow.geometry('450x300')
         self.rootWindow.columnconfigure(0, weight=1)
         self.rootWindow.rowconfigure(0, weight=1)
 
         self.notebook = Notebook(self.rootWindow)
-        # self.notebook.grid(row=0,column=0,padx=2,pady=2,sticky='nswe') # commented out by toshi on 2016-06-21(Tue) 18:30:25
         self.notebook.pack(side=TOP, padx=2, pady=2)
 
+        #### #### #### #### #### #### #### ####
+        ####  INITIALIZING THE GUI FRAMES   ###
+        #### #### #### #### #### #### #### ####
         self.frameRun = Frame()
         self.frameSettings = Frame()
         self.frameParameters = Frame()
-        self.frameInformation = Frame()
 
         self.notebook.add(self.frameRun,text="Run")
         self.notebook.add(self.frameSettings,text="Settings")
         self.notebook.add(self.frameParameters,text="Parameters")
-        self.notebook.add(self.frameInformation,text="Info")
-        self.notebook.pack(expand=NO, fill=BOTH, padx=5, pady=5 ,side=TOP)
-        # self.notebook.grid(row=0, column=0, padx=5, pady=5, sticky='nswe')   # commented out by toshi on 2016-06-21(Tue) 18:31:02
 
+        self.notebook.pack(expand=NO, fill=BOTH, padx=5, pady=5 ,side=TOP)
         self.status = Label(self.rootWindow, width=40,height=3, relief=SUNKEN, bd=1, textvariable=self.statusText)
-        # self.status.grid(row=1,column=0,padx=5,pady=5,sticky='nswe') # commented out by toshi on 2016-06-21(Tue) 18:31:17
         self.status.pack(side=TOP, fill=X, padx=5, pady=5, expand=NO)
 
-        # -----------------------------------
-        # frameRun
-        # -----------------------------------
+        #### #### #### #### ###
+        ####  FRAME1 - RUN  ###
+        #### #### #### #### ###
         # buttonRun
         self.runPauseString = StringVar()
         self.runPauseString.set("Run")
@@ -109,48 +114,34 @@ class GUI:
         self.buttonReset.pack(side=TOP, padx=5, pady=5)
         self.showHelp(self.buttonReset,"Resets the simulation")
 
-        # -----------------------------------
-        # frameSettings
-        # -----------------------------------
+        #### #### #### #### #### ###
+        ####  FRAME2 - SETTINGS  ###
+        #### #### #### #### #### ###
+        # step size Setting
         can = Canvas(self.frameSettings)
-
         lab = Label(can, width=25,height=1,text="Step size ", justify=LEFT, anchor=W,takefocus=0)
         lab.pack(side='left')
-
         self.stepScale = Scale(can,from_=1, to=50, resolution=1,command=self.changeStepSize,orient=HORIZONTAL, width=25,length=150)
         self.stepScale.set(self.stepSize)
         self.showHelp(self.stepScale,"Skips model redraw during every [n] simulation steps\nResults in a faster model run.")
         self.stepScale.pack(side='left')
-
         can.pack(side='top')
 
+        # time interval Setting
         can = Canvas(self.frameSettings)
         lab = Label(can, width=25,height=1,text="Step visualization delay in ms ", justify=LEFT, anchor=W,takefocus=0)
         lab.pack(side='left')
-        self.stepDelay = Scale(can,from_=0, to=max(2000,self.timeInterval),
-                               resolution=10,command=self.changeStepDelay,orient=HORIZONTAL, width=25,length=150)
+        self.stepDelay = Scale(can,from_=0, to=max(2000,self.timeInterval), resolution=10,command=self.changeStepDelay,orient=HORIZONTAL, width=25,length=150)
         self.stepDelay.set(self.timeInterval)
         self.showHelp(self.stepDelay,"The visualization of each step is delays by the given number of milliseconds.")
         self.stepDelay.pack(side='left')
-
         can.pack(side='top')
 
-        # --------------------------------------------
-        # frameInformation
-        # --------------------------------------------
-        scrollInfo = Scrollbar(self.frameInformation)
-        self.textInformation = Text(self.frameInformation, width=45,height=13,bg='lightgray',wrap=WORD,font=("Courier",10))
-        scrollInfo.pack(side=RIGHT, fill=Y)
-        self.textInformation.pack(side=LEFT,fill=BOTH,expand=YES)
-        scrollInfo.config(command=self.textInformation.yview)
-        self.textInformation.config(yscrollcommand=scrollInfo.set)
-
-        # --------------------------------------------
-        # ParameterSetters
-        # --------------------------------------------
+        #### #### #### #### #### ####
+        ####  FRAME3 - PARAMETERS ###
+        #### #### #### #### #### ####
         for variableSetter in self.parameterSetters:
             can = Canvas(self.frameParameters)
-
             lab = Label(can, width=25,height=1,text=variableSetter.__name__+" ",anchor=W,takefocus=0)
             lab.pack(side='left')
 
@@ -167,13 +158,10 @@ class GUI:
             self.varEntries[variableSetter]=ent
 
         if len(self.parameterSetters) > 0:
-            self.buttonSaveParameters = Button(self.frameParameters,width=50,height=1,
-                                               command=self.saveParametersCmd,text="Save parameters to the running model",state=DISABLED)
-            self.showHelp(self.buttonSaveParameters,
-                          "Saves the parameter values.\nNot all values may take effect on a running model\nA model reset might be required.")
+            self.buttonSaveParameters = Button(self.frameParameters,width=50,height=1, command=self.saveParametersCmd,text="Save parameters to the running model",state=DISABLED)
+            self.showHelp(self.buttonSaveParameters,"Saves the parameter values.\nNot all values may take effect on a running model\nA model reset might be required.")
             self.buttonSaveParameters.pack(side='top',padx=5,pady=5)
-            self.buttonSaveParametersAndReset = Button(self.frameParameters,width=50,height=1,
-                                                       command=self.saveParametersAndResetCmd,text="Save parameters to the model and reset the model")
+            self.buttonSaveParametersAndReset = Button(self.frameParameters,width=50,height=1,command=self.saveParametersAndResetCmd,text="Save parameters to the model and reset the model")
             self.showHelp(self.buttonSaveParametersAndReset,"Saves the given parameter values and resets the model")
             self.buttonSaveParametersAndReset.pack(side='top',padx=5,pady=5)
     # <<<<< Init >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -181,7 +169,6 @@ class GUI:
     def setStatusStr(self,newStatus):
         self.statusStr = newStatus
         self.statusText.set(self.statusStr)
-
 
     # model control functions for changing parameters
     def changeStepSize(self,val):
