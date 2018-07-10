@@ -36,30 +36,6 @@ class AGV:
             return []
 
 
-#######################################################################
-###### Update Environment method ######
-#######################################################################
-# INPUT: self = AGV, envir = environement
-# Set the environment value to 15 for the current AGV position
-# If the AGV has an intent
-    # Set the environment value to 5
-    def update_envir(self, envir):
-        #if(len(old_params) > 0 ):
-        #    envir[old_params[0]] = 0
-        #    envir[old_params[1][0]] = 0
-
-        envir[self.pos] = 15
-
-        if(len(self.path) > 0):
-            envir[self.path[0]] = 5
-
-        # If you decomment this code, you set the environment value
-        # for each AGV goal but you have to handle the Conflict Handler method
-        # otherwise the AGV will not access a goal location.
-
-        #if(len(self.goal) != 0):
-        #    envir[self.goal[0]] = 0.5
-        return envir
 
 #######################################################################
 ###### Conflict Handler method ######
@@ -74,13 +50,15 @@ class AGV:
         # OUTPUT: the new path with the current position ahead
 # reset the pos_temp environment location to free
     def conflict_handler(self, envir):
-        pos_temp = self.path[0][::-1]
+        pos_temp = self.path[0]
+
         if(envir[self.path[0]] != 0):
-            envir[self.path[0][::-1]] = 0.01
+            envir[self.path[0]] = 0.01
             if(len(self.path) > 1):
                 conflict_path = navigation(envir, self.pos, self.path[1])
                 self.path = conflict_path[0:len(conflict_path)-1] + self.path[1:]
             else:
                 self.path = [self.pos] + self.path
-        envir[pos_temp] = 0
+
+        envir[pos_temp] = envir[self.path[0]]
         return self.path

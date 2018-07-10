@@ -7,7 +7,7 @@ def new_goal(orders_list):
     return goals, orders_list
 
 def new_gate():
-    gate = (0,0)
+    gate = (0, 10)
     return gate
 
 def getGoals(orders_list):
@@ -23,7 +23,7 @@ def getGoals(orders_list):
         return [], orders_list
 
 def order_location(ind):
-    map_locations = {"shoes": (10, 10), "tshirt" : (10, 10), "pullover" : (20,20), "hat" : (2,30)}
+    map_locations = {"shoes": (5, 10), "tshirt" : (5, 5), "pullover" : (0,20), "hat" : (0,30)}
     #map_locations = {"shoes": (10, 10), "tshirt" : (20, 10), "pullover" : (20,20), "hat" : (2,30)}
     for i in map_locations.keys():
         if(i == ind):
