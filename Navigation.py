@@ -1,8 +1,8 @@
 import collections
 import numpy as np
+
 def navigation(envir, position, goal):
     wall, gate, clear = 0.01, 0.02, 0
-
     width, height = envir.shape
     queue = collections.deque([[position]])
     seen = set(position)

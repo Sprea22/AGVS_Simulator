@@ -234,10 +234,13 @@ class GUI:
         self.setStatusStr("Model has been reset")
         self.drawModel()
 
+
     def drawModel(self):
         PL.ion() # bug fix by Alex Hill in 2013
         if self.modelFigure == None or self.modelFigure.canvas.manager.window == None:
-            self.modelFigure = PL.figure()
+            print("")
+            self.modelFigure = PL.figure("AGVS Simulation")
+            self.modelFigure2 = PL.figure("AGVS Simulation")
         self.modelDrawFunc()
         self.modelFigure.canvas.manager.window.update()
         PL.show() # bug fix by Hiroki Sayama in 2016

@@ -2,40 +2,41 @@ import numpy as np
 from Navigation import navigation
 import random as rd
 
+##### ##### ##### AGV Class ##### ##### #####
+# state:
+# path:
+# goals:
+# clients:
+# id:
+# pos:
+# init_pos:
+# color:
+#-------------------------------------------
+# get_pos():
+# get_intent():
+# conflict_handler():
+##### ##### ##### ##### ##### ##### #####
+
 class AGV:
-    #variabili comuni alle istanze della clase
+    # agent default variables initialization
     state = "Free"
     path = []
-    goal = []
-    gate = []
+    goals = []
+    clients = []
 
-
-
-    #costruttore
-    def __init__(self, pos, color):
-        #variabili che cambiano per ogni istanza
+    # constructor
+    def __init__(self, pos, color, id):
+        # agent default initialization
+        self.id = id
         self.pos = pos
         self.init_pos = pos
-        #rand_color = rc.RandomColor()
-        #self.color = rand_color.generate()
         self.color = color
 
-    def get_X(self):
-        return self.pos[1]
-
-    def get_Y(self):
-        return self.pos[0]
+    def get_pos(self):
+        return self.pos[1], self.pos[0]
 
     def get_intent(self):
         return self.path[0]
-
-    def get_next_goal(self):
-        if(self.goal != [] and self.goal[0] != [0,0]):
-            return self.goal[0]
-        else:
-            return []
-
-
 
 #######################################################################
 ###### Conflict Handler method ######

@@ -46,11 +46,9 @@ def update_envir(self, envir):
 
     if(len(self.path) > 0):
         envir[self.path[0]] = 5
-
     # If you decomment this code, you set the environment value
     # for each AGV goal but you have to handle the Conflict Handler method
     # otherwise the AGV will not access a goal location.
-
     #if(len(self.goal) != 0):
     #    envir[self.goal[0]] = 0.5
     return envir
