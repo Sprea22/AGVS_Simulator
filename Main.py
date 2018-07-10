@@ -29,14 +29,24 @@ def init():
     orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
     time = 0
     agents = []
-    states = ["Free", "Next_Goal", "Ongoing", "Loading", "Returning", "Unloading"]
 
-    agents.append(AGV((5, 5),"red"))
-    agents.append(AGV((5, 10),"magenta"))
+
+    # Initializing the agents
+    if(behavior_type == 1):
+        agents.append(AGV((5, 5),"red"))
+        agents.append(AGV((5, 10),"magenta"))
+
+    elif(behavior_type == 2):
+        agents.append(AGV((28, 4),"red"))
+        agents.append(AGV((28, 14),"magenta"))
+        agents.append(AGV((28, 24),"red"))
+        agents.append(AGV((28, 34),"magenta"))
+
+    else:
+        print "Error - State is not existing."
 
     # Initilizing the environement
-    envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
-
+    envir = envir_configuration(width, height)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -73,15 +83,16 @@ def step():
     time += 1
 
     for ag in agents:
+
         envir = envir_reset(ag, envir)
 
         if(ag.state == "Free"):
-            ag.goal, orders_list = new_goal(orders_list)
+            ag.goal, orders_list = new_goal(orders_list, behavior_type)
             if(ag.goal != []):
                 ag.path = navigation(envir, ag.pos, ag.goal[0])
                 ag.state = "Ongoing"
             else:
-                ag.state = "Free"
+                ag.state = "Home"
 
         elif(ag.state == "Next_Goal"):
             ag.path = navigation(envir, ag.pos, ag.goal[0])
@@ -117,8 +128,24 @@ def step():
         elif(ag.state == "Unloading"):
             ag.state = unload("Unloading", ag.goal)
 
+        elif(ag.state == "Home"):
+            if(ag.pos != ag.init_pos):
+                ag.goal = [ag.init_pos]
+                ag.path = navigation(envir,ag.pos, ag.goal[0])
+                ag.state = "To_Home"
+            else:
+                #QUI DECIDIAMO COSA FARE PERCHe' I ROBOTTINI SONO IN BUSY WAIT
+                print "plz kill meeeee I'm slowly starvinggggg ahhhhhhhhh"
+        elif(ag.state == "To_Home"):
+            if(len(ag.path) > 0):
+                ag.path = ag.conflict_handler(envir)
+                ag.pos = ag.path[0]
+                ag.path.pop(0)
+            else:
+                ag.state = "Home"
+
         else:
-            print("Error - State is not existing.")
+            print "Error - State is not existing."
 
         # The agent update the Environment with its location and its intention
         #envir = ag.update_envir(envir, old_params)

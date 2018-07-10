@@ -29,6 +29,8 @@ def envir_reset(ag, envir):
     if(len(ag.path) != 0):
         if(envir[ag.path[0]] == 5):
             envir[ag.path[0]] = 0
+    #if(len(ag.goal) != 0):
+    #    envir[ag.goal[0]] = 0
     return envir
 
 #######################################################################

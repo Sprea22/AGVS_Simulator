@@ -1,7 +1,6 @@
 import numpy as np
 from Navigation import navigation
 import random as rd
-import randomcolor as rc
 
 class AGV:
     #variabili comuni alle istanze della clase
@@ -10,10 +9,13 @@ class AGV:
     goal = []
     gate = []
 
+
+
     #costruttore
     def __init__(self, pos, color):
         #variabili che cambiano per ogni istanza
         self.pos = pos
+        self.init_pos = pos
         #rand_color = rc.RandomColor()
         #self.color = rand_color.generate()
         self.color = color
@@ -32,6 +34,8 @@ class AGV:
             return self.goal[0]
         else:
             return []
+
+
 
 #######################################################################
 ###### Conflict Handler method ######
