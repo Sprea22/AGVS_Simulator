@@ -27,6 +27,7 @@ def init():
     # Initilizing the environement
     envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
 
+
     # Initializing the agents
     if(behavior_type == 1):
         agents.append(AGV((28, 14),"red", 0))
@@ -35,25 +36,27 @@ def init():
 
     elif(behavior_type == 2):
         agents.append(AGV((28, 4),"red", 1))
-        agents.append(AGV((28, 14),"magenta", 2))
-        agents.append(AGV((28, 24),"red", 3))
-        agents.append(AGV((28, 34),"magenta", 4))
+        agents.append(AGV((28, 14),"magenta", 4))
+        agents.append(AGV((28, 24),"red", 7))
+        agents.append(AGV((28, 34),"magenta", 10))
 
     elif(behavior_type == 3):
         agents.append(AGV((28, 4),"red", 1))
         agents.append(AGV((28, 6),"red", 1))
-        agents.append(AGV((28, 14),"magenta", 2))
-        agents.append(AGV((28, 16),"magenta", 2))
-        agents.append(AGV((28, 24),"red", 3))
-        agents.append(AGV((28, 26),"red", 3))
-        agents.append(AGV((28, 34),"magenta", 4))
-        agents.append(AGV((28, 36),"magenta", 4))
+        agents.append(AGV((28, 14),"magenta", 4))
+        agents.append(AGV((28, 16),"magenta", 4))
+        agents.append(AGV((28, 24),"red", 7))
+        agents.append(AGV((28, 26),"red", 7))
+        agents.append(AGV((28, 34),"magenta", 10))
+        agents.append(AGV((28, 36),"magenta", 10))
 
     elif(behavior_type == 4):
         agents.append(AGV((28, 4),"red", 0))
         agents.append(AGV((28, 14),"magenta", 0))
         agents.append(AGV((28, 24),"red", 0))
         agents.append(AGV((28, 34),"magenta", 0))
+
+    # IBRIDA: ROBOTTINI STATICI E ROBOTTINI LIBERI
 
     else:
         print("Error - State is not existing.")
@@ -88,7 +91,7 @@ def draw():
     ################ ################ ################ ################ ################
     # NEL FILE "PYCXSIMULATOR" QUESTO METODO è CHIAMATO self.modelDrawFunc() ALLA RIGA 244
     ################ ################ ################ ################ ################
-    
+
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def step():

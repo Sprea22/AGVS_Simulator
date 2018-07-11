@@ -16,7 +16,6 @@ def new_goal(ag, orders_list, behavior_type):
 
     elif(behavior_type == 4):
         goals, clients, orders_list = getGoals4(ag, orders_list)
-
     return goals, clients, orders_list
 
 ##############################################################################
@@ -27,19 +26,15 @@ def new_goal(ag, orders_list, behavior_type):
 ##############################################################################
 def new_gate(ag):
     gate = (-1, -1)
-    if(ag.clients[0] == 11):
-        gate = (0,0)
-    elif(ag.clients[0] == 22):
-        gate = (0,20)
-    elif(ag.clients[0] == 33):
-        gate = (0,30)
+    if(ag.clients[0] == "A"):
+        gate = (0,11)
+    elif(ag.clients[0] == "B"):
+        gate = (0,25)
+    elif(ag.clients[0] == "C"):
+        gate = (0,39)
     else:
         print("Error - Client is not existing")
     return gate
-
-#def to_position(ag):
-#    pos = ag.init_pos
-#    return pos
 
 ##############################################################################
 # The "order_location" function allows to map the items location in the environment
@@ -47,7 +42,8 @@ def new_gate(ag):
 # OUPUT: the location of the article in the "ind" position of the map_locations
 ##############################################################################
 def order_location(ind):
-    map_locations = {"shoes": (10,5), "tshirt" : (28,13), "pullover" : (11,43), "hat" : (45,32)}
+    map_locations = {"shoes_R": (35,7), "shoes_G": (11,7), "shoes_B": (20,13), "tshirt_R" : (28,16), "tshirt_G" : (40,16), "tshirt_B" : (28,23),
+    "pullover_R" : (19,26), "pullover_G" : (31,33), "pullover_B" : (15,33), "hat_R" : (42,36), "hat_G" : (24,42), "hat_B" : (45,41)}
     for i in map_locations.keys():
         if(i == ind):
             return map_locations[i]
@@ -87,21 +83,10 @@ def getGoals1(orders_list):
 ##############################################################################
 def getGoals23(ag, orders_list):
     if(len(orders_list) != 0):
-        clients = orders_list["client"]
-        orders = orders_list[orders_list.columns[ag.id]]
-
-        order = []
-        client = []
-        for index, val in orders.iteritems():
-            if(val != 0):
-                order.append(order_location(orders_list.columns[ag.id]))
-                client.append(clients[index])
-                orders_list[orders_list.columns[ag.id]].iloc[index] = 0;
-                break
+        orders = orders_list[["client", orders_list.columns[ag.id], orders_list.columns[ag.id + 1], orders_list.columns[ag.id + 2]]]
+        order, client, temp_orders_list = getGoals4(ag, orders)
+        orders_list[["client", orders_list.columns[ag.id], orders_list.columns[ag.id + 1], orders_list.columns[ag.id + 2]]] = temp_orders_list
         return order, client, orders_list
-    else:
-        print("All the orders are correctly done!")
-        return [], [], orders_list
 
 ##############################################################################
 ############################## Behaviour type 4  #############################
@@ -126,4 +111,5 @@ def getGoals4(ag, orders_list):
                          orders_list[column].iloc[index] = 0
                          print(orders_list)
                          return order, client, orders_list
+
         return [], [], orders_list
