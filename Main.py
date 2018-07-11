@@ -15,7 +15,7 @@ from Load_Transfer import *
 time = 0
 width = 50
 height = 50
-behavior_type = 1
+behavior_type = 0
 agents = []
 orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
 
@@ -29,9 +29,9 @@ def init():
 
     # Initializing the agents
     if(behavior_type == 1):
-        agents.append(AGV((28, 14),"red", 1))
-        agents.append(AGV((28, 24),"red", 2))
-        agents.append(AGV((28, 34),"magenta", 3))
+        agents.append(AGV((28, 14),"red", 0))
+        agents.append(AGV((28, 24),"red", 0))
+        agents.append(AGV((28, 34),"magenta", 0))
 
     elif(behavior_type == 2):
         agents.append(AGV((28, 4),"red", 1))
@@ -39,10 +39,24 @@ def init():
         agents.append(AGV((28, 24),"red", 3))
         agents.append(AGV((28, 34),"magenta", 4))
 
+    elif(behavior_type == 3):
+        agents.append(AGV((28, 4),"red", 1))
+        agents.append(AGV((28, 6),"red", 1))
+        agents.append(AGV((28, 14),"magenta", 2))
+        agents.append(AGV((28, 16),"magenta", 2))
+        agents.append(AGV((28, 24),"red", 3))
+        agents.append(AGV((28, 26),"red", 3))
+        agents.append(AGV((28, 34),"magenta", 4))
+        agents.append(AGV((28, 36),"magenta", 4))
+
+    elif(behavior_type == 4):
+        agents.append(AGV((28, 4),"red", 0))
+        agents.append(AGV((28, 14),"magenta", 0))
+        agents.append(AGV((28, 24),"red", 0))
+        agents.append(AGV((28, 34),"magenta", 0))
+
     else:
         print("Error - State is not existing.")
-
-
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -71,10 +85,10 @@ def draw():
     pl.hold(False)
     pl.title('t = ' + str(time))
 
-    #
+    ################ ################ ################ ################ ################
     # NEL FILE "PYCXSIMULATOR" QUESTO METODO è CHIAMATO self.modelDrawFunc() ALLA RIGA 244
-    #
-
+    ################ ################ ################ ################ ################
+    
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def step():
