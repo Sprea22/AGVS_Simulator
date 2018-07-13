@@ -1,6 +1,6 @@
 import numpy as np
-from Navigation import navigation
 import random as rd
+from Navigation import navigation
 
 ##### ##### ##### AGV Class ##### ##### #####
 # state:
@@ -38,6 +38,7 @@ class AGV:
     def get_intent(self):
         return self.path[0]
 
+
 #######################################################################
 ###### Conflict Handler method ######
 #######################################################################
@@ -51,15 +52,20 @@ class AGV:
         # OUTPUT: the new path with the current position ahead
 # reset the pos_temp environment location to free
     def conflict_handler(self, envir):
+        # Data stats: no conflict
+        conflict_bool = [0,0]
         pos_temp = self.path[0]
-
+        envir_temp = envir[pos_temp]
         if(envir[self.path[0]] != 0):
+            # Data stats: conflit and wait
+            conflict_bool = [1,0]
             envir[self.path[0]] = 0.01
             if(len(self.path) > 1):
+                # Data stats: conflict and path change
+                conflict_bool = [2,0]
                 conflict_path = navigation(envir, self.pos, self.path[1])
                 self.path = conflict_path[0:len(conflict_path)-1] + self.path[1:]
             else:
                 self.path = [self.pos] + self.path
-
-        envir[pos_temp] = envir[self.path[0]]
-        return self.path
+        envir[pos_temp] = envir_temp
+        return self.path, conflict_bool

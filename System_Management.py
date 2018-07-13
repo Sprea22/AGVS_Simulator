@@ -7,7 +7,7 @@ import numpy as np
 # It allows to return different kind of goals considering the behavir type of
 # the AGV within the simultion.
 ##############################################################################
-def new_goal(ag, orders_list, behavior_type):
+def new_goal(ag, orders_list, behavior_type, max1, max2):
     if(behavior_type == 1):
         goals, clients, orders_list = getGoals1(orders_list)
 
@@ -16,6 +16,11 @@ def new_goal(ag, orders_list, behavior_type):
 
     elif(behavior_type == 4):
         goals, clients, orders_list = getGoals4(ag, orders_list)
+
+    elif(behavior_type == 5):
+        print("MAX1 :", max1)
+        goals, clients, orders_list = getGoals5(ag, orders_list, max1, max2)
+
     return goals, clients, orders_list
 
 ##############################################################################
@@ -109,7 +114,42 @@ def getGoals4(ag, orders_list):
                          order.append(order_location(column))
                          client.append(clients[index])
                          orders_list[column].iloc[index] = 0
-                         print(orders_list)
                          return order, client, orders_list
 
         return [], [], orders_list
+
+
+##############################################################################
+############################## Behaviour type 5  #############################
+########################### Staits and Dynamic AGVs ##########################
+##############################################################################
+# INPUT: agent, Orders list, max1, max2
+# OUTPUT:
+#
+#
+##############################################################################
+def getGoals5(ag, orders_list, max1, max2):
+    print(ag.id)
+    if(len(orders_list) != 0):
+        if(ag.id == 1):
+            to_check = max1
+        elif(ag.id == 2):
+            to_check = max2
+        else:
+            to_check = orders_list.drop(columns = [max1, max2]).columns.values
+            print("\n\n\n")
+        print(to_check)
+        if(isinstance(to_check, str)):
+            orders = orders_list[["client", to_check]]
+            order, client, temp_orders_list = getGoals4(ag, orders)
+            orders_list[["client", to_check]] = temp_orders_list
+        else:
+            print(to_check)
+            print(orders_list)
+            orders = orders_list[to_check]
+            order, client, temp_orders_list = getGoals4(ag, orders)
+            orders_list[to_check] = temp_orders_list
+
+        print(order)
+        print("------------------------")
+        return order, client, orders_list
