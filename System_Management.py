@@ -29,17 +29,23 @@ def new_goal(ag, orders_list, behavior_type, max1, max2):
 # INPUT: agent, in particular ag.clients[0] that contains the current client for the agent
 # OUTPUT: gate location
 ##############################################################################
-def new_gate(ag):
-    gate = (-1, -1)
+def new_gate(ag, gates):
     if(ag.clients[0] == "A"):
-        gate = (0,11)
+        lp = gates[0].lp_hold()
+        gate = 0
     elif(ag.clients[0] == "B"):
-        gate = (0,25)
+        lp = gates[1].lp_hold()
+        gate = 1
     elif(ag.clients[0] == "C"):
-        gate = (0,39)
+        lp = gates[2].lp_hold()
+        gate = 2
     else:
         print("Error - Client is not existing")
-    return gate
+    return lp, gate, gates
+
+def free_gate(ag, gates):
+    gates[ag.gate].lp_free(ag.pos)
+    return -1, gates
 
 ##############################################################################
 # The "order_location" function allows to map the items location in the environment

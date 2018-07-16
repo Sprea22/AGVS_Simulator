@@ -23,6 +23,7 @@ class AGV:
     path = []
     goals = []
     clients = []
+    gate = -1
 
     # constructor
     def __init__(self, pos, color, id):

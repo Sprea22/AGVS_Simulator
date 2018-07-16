@@ -11,6 +11,7 @@ from Navigation import *
 from System_Management import *
 from Load_Transfer import *
 from Data_Stats import *
+from Gate import *
 
 # Default input parameters
 max1 = 0
@@ -20,6 +21,7 @@ width = 50
 height = 50
 behavior_type = 0
 agents = []
+gates = []
 orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
 # [0] = number of conflicts, [1] = number of waits during a conflict , [2] = number of paths changed during a conflict
 # [3] = number of run (returned article)
@@ -28,12 +30,15 @@ data_stats = []
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
-    global time, agents, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y,  max1, max2
+    global time, agents, gates, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y,  max1, max2
 
     # Initilizing the environement
     envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
 
-
+    # Initilizing the gate objects
+    gates.append(Gate(0, (0,9), (0,11), (0,13), (3,9)))
+    gates.append(Gate(1, (0,23), (0,25), (0,27), (3, 25)))
+    gates.append(Gate(2, (0,37), (0,39), (0,41), (3, 41)))
     # Initializing the agents
     if(behavior_type == 1):
         agents.append(AGV((28, 14),"red", 0))
@@ -100,7 +105,7 @@ def draw():
         if(len(ag.path) > 0):
             intent = ag.path[0]
             # Plot the agent's intention on the matrix
-            pl.scatter(intent[1] + 0.5, intent[0] + 0.5, c = ag.color)
+    #       pl.scatter(intent[1] + 0.5, intent[0] + 0.5, c = ag.color)
         if(len(ag.goals) > 0):
             goals = ag.goals[0]
             # Plot the agent's goal on the matrix
@@ -115,14 +120,13 @@ def draw():
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def step():
-    global time, agents, envir, orders_list, data_stats, max1, max2
+    global time, agents, gates, envir, orders_list, data_stats, max1, max2
     # New step of time
     time += 1
 
     for ag in agents:
 
         envir = envir_reset(ag, envir)
-
         if(ag.state == "Free"):
             ag.goals, ag.clients, orders_list = new_goal(ag, orders_list, behavior_type, max1, max2)
             if(ag.goals != []):
@@ -148,9 +152,43 @@ def step():
                 ag.goals.pop(0)
 
         elif(ag.state == "Loading"):
-            gate = new_gate(ag)
-            ag.path = navigation(envir, ag.pos, gate)
-            ag.state = load("Loading")
+            lp, ag.gate, gates = new_gate(ag, gates)
+            if(lp != (-1, -1)):
+                ag.path = navigation(envir, ag.pos, lp)
+                ag.state = load("Loading")
+            else:
+                gates[ag.gate].AGV_queue.append(ag)
+                wait_loc = gates[ag.gate].queue_loc
+                ag.path = navigation(envir, ag.pos, wait_loc)
+                ag.state = load("Loading_FullGate")
+            # Controllare se c'è qualcuno che sta aspettando. Se si, prioritizza lui e aspetta tu
+
+        elif(ag.state == "Returning_Wait"):
+            if(not(gates[ag.gate].lp_available())):
+                if(len(ag.path) > 0):
+                    ag.path, conflict_bool = ag.conflict_handler(envir)
+                    data_stats = data_conflicts_and_step(data_stats, conflict_bool, ag, agents)
+                    ag.pos = ag.path[0]
+                    ag.path.pop(0)
+                # Reached the goal
+                else:
+                    # Changing the state of the agent that is unloading
+                    ag.state = unload("Returning_Wait", ag.goals)
+                    data_stats = data_runs(data_stats, ag, agents)
+            # Handles the case of AGV in "wait" state starving
+            else:
+                temp_gate_loc = gates[ag.gate].lp_hold()
+                gates[ag.gate].AGV_queue.pop(0)
+                ag.path = navigation(envir, ag.pos, temp_gate_loc)
+                ag.state = load(ag.state)
+
+        elif(ag.state == "Wait"):
+            # Handle the case of AGV in "wait" state starving
+            if(gates[ag.gate].lp_available()):# and ag in gates[ag.gate].AGV_queue):
+                temp_gate_loc = gates[ag.gate].lp_hold()
+                gates[ag.gate].AGV_queue.pop(0)
+                ag.path = navigation(envir, ag.pos, temp_gate_loc)
+                ag.state = load(ag.state)
 
         elif(ag.state == "Returning"):
             # Moving to the goal
@@ -166,6 +204,7 @@ def step():
                 data_stats = data_runs(data_stats, ag, agents)
 
         elif(ag.state == "Unloading"):
+            ag.gate, gates = free_gate(ag, gates)
             ag.state = unload("Unloading", ag.goals)
 
         elif(ag.state == "Home"):
@@ -176,6 +215,7 @@ def step():
             else:
                 #QUI DECIDIAMO COSA FARE PERCHe' I ROBOTTINI SONO IN BUSY WAIT
                 print("I'm done with my job!")
+
         elif(ag.state == "To_Home"):
             if(len(ag.path) > 0):
                 ag.path, conflict_bool = ag.conflict_handler(envir)
@@ -197,6 +237,7 @@ def step():
             break
         else:
             data_stats.to_csv("Test.csv")
+
 
 #------------------------------------------------------------------------------
 from Pycx_Simulator import pycxsimulator
