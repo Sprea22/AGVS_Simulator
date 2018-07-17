@@ -7,7 +7,7 @@ import numpy as np
 # It allows to return different kind of goals considering the behavir type of
 # the AGV within the simultion.
 ##############################################################################
-def new_goal(ag, orders_list, behavior_type, n_col_per_ag, max1, max2):
+def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
     # Cambia in base al behavior type inserito E DISPONIBILITA' GATE
     for index, row in orders_list[orders_list["status"] == 1].iterrows():
         if(sum(row[2:]) == 0):
@@ -23,7 +23,7 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag, max1, max2):
             order, client, orders_list = getGoal_2(ag, orders_list, n_col_per_ag)
 
         elif(behavior_type == 3):
-            ag, orders_list = getGoal_3(ag, orders_list)
+            order, client, orders_list = getGoal(ag, orders_list)
 
         return  order, client, info_order, orders_list
 

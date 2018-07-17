@@ -14,8 +14,6 @@ from Data_Stats import *
 from Gate import *
 
 # Default input parameters
-max1 = 0
-max2 = 0
 time = 0
 width = 50
 height = 50
@@ -32,7 +30,7 @@ data_stats = []
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
-    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y,  max1, max2
+    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y
 
     # Initilizing the environement
     envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
@@ -54,25 +52,12 @@ def init():
             agents.append(AGV((28+n, 24),"blue", 8))
             agents.append(AGV((28+n, 34),"orange", 11))
 
-    elif(behavior_type == 4):
+    elif(behavior_type == 3):
         agents.append(AGV((28, 4),"red", 0))
         agents.append(AGV((28, 14),"magenta", 0))
         agents.append(AGV((28, 24),"blue", 0))
         agents.append(AGV((28, 34),"orange", 0))
 
-    elif(behavior_type == 5):
-        agents.append(AGV((28, 4),"red", 1))
-        agents.append(AGV((30, 4),"red", 1))
-
-        agents.append(AGV((28, 14),"magenta", 2))
-        agents.append(AGV((30, 14),"magenta", 2))
-        agents.append(AGV((28, 24),"blue", 3))
-        agents.append(AGV((30, 24),"blue", 3))
-
-        fq = orders_list.sum()[1:].to_frame().T.astype(int)
-        max1 = fq.idxmax(axis = 1).values[0]
-        fq = fq.drop(columns = [max1])
-        max2 = fq.idxmax(axis = 1).values[0]
     else:
         print("Error - State is not existing.")
 
@@ -122,7 +107,7 @@ def step():
 
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
-            ag.goals, ag.clients, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag, max1, max2)
+            ag.goals, ag.clients, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
             ag.state = state_transaction(ag.state, ag.goals)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goals[0])
