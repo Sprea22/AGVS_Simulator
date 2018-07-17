@@ -7,21 +7,29 @@ import numpy as np
 # It allows to return different kind of goals considering the behavir type of
 # the AGV within the simultion.
 ##############################################################################
-def new_goal(ag, orders_list, behavior_type, max1, max2):
-    if(behavior_type == 1):
-        goals, clients, orders_list = getGoals1(orders_list)
+def new_goal(ag, orders_list, behavior_type, n_col_per_ag, max1, max2):
+    # Cambia in base al behavior type inserito E DISPONIBILITA' GATE
+    for index, row in orders_list[orders_list["status"] == 1].iterrows():
+        if(sum(row[2:]) == 0):
+            orders_list["status"].iloc[index] = 2
 
-    elif(behavior_type == 2 or behavior_type == 3):
-        goals, clients, orders_list = getGoals23(ag, orders_list)
+    if(not(orders_list.loc[orders_list["status"] == 0].empty)):
+        info_order = [-1, -1]
 
-    elif(behavior_type == 4):
-        goals, clients, orders_list = getGoals4(ag, orders_list)
+        if(behavior_type == 1):
+            order, client, info_order, orders_list = getGoal_1(ag, orders_list)
 
-    elif(behavior_type == 5):
-        print("MAX1 :", max1)
-        goals, clients, orders_list = getGoals5(ag, orders_list, max1, max2)
+        elif(behavior_type == 2):
+            order, client, orders_list = getGoal_2(ag, orders_list, n_col_per_ag)
 
-    return goals, clients, orders_list
+        elif(behavior_type == 3):
+            ag, orders_list = getGoal_3(ag, orders_list)
+
+        return  order, client, info_order, orders_list
+
+    else:
+        return [], [], [-1, -1], orders_list
+
 
 ##############################################################################
 # The "new_gate" function is used by the AGV in order to get the gate location
@@ -60,102 +68,52 @@ def order_location(ind):
             return map_locations[i]
 
 ##############################################################################
-############################## Behaviour type 1  #############################
-########################## 1 Order - 1 Specific AGV ##########################
 ##############################################################################
-# INPUT: Orders list
-# OUTPUT: List of articles for the AGV (order),
-#         List of client for each article in the order (client),
-#         Order list without the first row(order_list.iloc[1:] )
 ##############################################################################
-def getGoals1(orders_list):
-    if(len(orders_list) != 0):
-        clients = orders_list["client"].iloc[0]
-        orders_list_noID = orders_list.iloc[0][1:]
+##############################################################################
+##############################################################################
+
+def getGoal_1(ag, orders_list):
+    if(ag.info_order[0] != -1 and sum(orders_list.iloc[ag.info_order[0]][2:]) == 0):
+        ag.info_order[0] = -1
+    if(ag.info_order[0] == -1):
+        ag.info_order[0] = orders_list.loc[orders_list["status"] == 0].iloc[0].name
+        orders_list["status"].iloc[ag.info_order[0]] = 1
+        window_order_list = orders_list.iloc[ag.info_order[0]]
+    elif(ag.info_order[0] != -1):
+        window_order_list = orders_list.iloc[ag.info_order[0]]
+
+    window_order_list = window_order_list.to_frame().T
+    window_order_list.index = range(0,1)
+    order, client, window_order_list = getGoal(ag, window_order_list)
+    orders_list.iloc[ag.info_order[0]] = window_order_list.iloc[0]
+    return  order, client, ag.info_order, orders_list
+
+
+
+def getGoal_2(ag, orders_list, n_col_per_ag):
+    # Si può mettere nell'inizializzazione degli AGV una volta sola nel main
+    ag_columns = ["client", "status"]
+    for x in orders_list.columns[ag.id : ag.id + n_col_per_ag]:
+        ag_columns.append(x)
+    order, client, window_orders_list = getGoal(ag, orders_list[ag_columns])
+    orders_list[ag_columns] = window_orders_list
+    return order, client, orders_list
+
+
+
+def getGoal(ag, window_orders_list):
+    if(len(window_orders_list) != 0):
+        clients = window_orders_list["client"]
         order = []
         client = []
-        for index, val in orders_list_noID.iteritems():
-            if(val != 0):
-                order.append(order_location(index))
-                client.append(clients)
-        return order, client, orders_list.iloc[1:]
-    else:
-        print("All the orders are correctly done!")
-        return [], [], orders_list
-
-##############################################################################
-############################# Behaviour type 2-3  ############################
-##################### 1 Specific Article - 1 Specific AGV ####################
-##############################################################################
-# INPUT: agent, Orders list
-# OUTPUT: 1 specific article (order)
-#         1 client related to the article (client),
-#         Order list with the picked up article set to 0
-##############################################################################
-def getGoals23(ag, orders_list):
-    if(len(orders_list) != 0):
-        orders = orders_list[["client", orders_list.columns[ag.id], orders_list.columns[ag.id + 1], orders_list.columns[ag.id + 2]]]
-        order, client, temp_orders_list = getGoals4(ag, orders)
-        orders_list[["client", orders_list.columns[ag.id], orders_list.columns[ag.id + 1], orders_list.columns[ag.id + 2]]] = temp_orders_list
-        return order, client, orders_list
-
-##############################################################################
-############################## Behaviour type 4  #############################
-############################## 1 Article - 1 AGV #############################
-##############################################################################
-# INPUT: agent, Orders list
-# OUTPUT:
-#
-#
-##############################################################################
-def getGoals4(ag, orders_list):
-    if(len(orders_list) != 0):
-        clients = orders_list["client"]
-        order = []
-        client = []
-        for index, row in orders_list.iterrows():
-            for column in orders_list:
-                if(column != "client"):
+        for index, row in window_orders_list.iterrows():
+            for column in window_orders_list:
+                if(column != "client" and column != "status"):
                     if(row[column] == 1):
                          order.append(order_location(column))
                          client.append(clients[index])
-                         orders_list[column].iloc[index] = 0
-                         return order, client, orders_list
-
-        return [], [], orders_list
-
-
-##############################################################################
-############################## Behaviour type 5  #############################
-########################### Staits and Dynamic AGVs ##########################
-##############################################################################
-# INPUT: agent, Orders list, max1, max2
-# OUTPUT:
-#
-#
-##############################################################################
-def getGoals5(ag, orders_list, max1, max2):
-    print(ag.id)
-    if(len(orders_list) != 0):
-        if(ag.id == 1):
-            to_check = max1
-        elif(ag.id == 2):
-            to_check = max2
-        else:
-            to_check = orders_list.drop(columns = [max1, max2]).columns.values
-            print("\n\n\n")
-        print(to_check)
-        if(isinstance(to_check, str)):
-            orders = orders_list[["client", to_check]]
-            order, client, temp_orders_list = getGoals4(ag, orders)
-            orders_list[["client", to_check]] = temp_orders_list
-        else:
-            print(to_check)
-            print(orders_list)
-            orders = orders_list[to_check]
-            order, client, temp_orders_list = getGoals4(ag, orders)
-            orders_list[to_check] = temp_orders_list
-
-        print(order)
-        print("------------------------")
-        return order, client, orders_list
+                         window_orders_list[column].iloc[index] = 0
+                         print("----------", order, client)
+                         return order, client, window_orders_list
+        return [], [], window_orders_list

@@ -24,6 +24,7 @@ class AGV:
     goals = []
     clients = []
     gate = -1
+    info_order = [-1, -1]
 
     # constructor
     def __init__(self, pos, color, id):
