@@ -1,9 +1,9 @@
 
 def state_transaction(state, goal):
-    if(state == "Free" and len(goal) != 0):
+    if(state == "Free" and goal != (-1, -1)):
         return "To_Goal"
 
-    elif(state == "Free" and len(goal) == 0):
+    elif(state == "Free" and goal == (-1, -1)):
         return "To_Home"
 
     elif(state == "To_Goal"):
@@ -27,7 +27,7 @@ def state_transaction(state, goal):
     elif(state == "Loading" and goal == (-1, -1)):
         return "To_WaitingPoint"
 
-    elif(state == "Unloading" and len(goal) == 0):
+    elif(state == "Unloading" and goal == (-1, -1)):
         return "Free"
 
     elif(state == "Home"):

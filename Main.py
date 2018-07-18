@@ -86,8 +86,8 @@ def draw():
             intent = ag.path[0]
             # Plot the agent's intention on the matrix
     #       pl.scatter(intent[1] + 0.5, intent[0] + 0.5, c = ag.color)
-        if(len(ag.goals) > 0):
-            goals = ag.goals[0]
+        if(len(ag.goal) > 0):
+            goals = ag.goal
             # Plot the agent's goal on the matrix
             pl.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
     pl.hold(False)
@@ -103,18 +103,16 @@ def step():
     global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2
     # New step of time
     time += 1
-    print("-----------")
     for ag in agents:
 
-        print(ag.id, ag.state, ag.gate, ag.clients, ag.info_order)
         envir = envir_reset(ag, envir)
 
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
-            ag.goals, ag.clients, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
-            ag.state = state_transaction(ag.state, ag.goals)
+            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
+            ag.state = state_transaction(ag.state, ag.goal)
             if(ag.state == "To_Goal"):
-                ag.path = navigation(envir, ag.pos, ag.goals[0])
+                ag.path = navigation(envir, ag.pos, ag.goal)
                 moving(ag, envir, data_stats)
             elif(ag.state == "To_Home"):
                 if(ag.pos != ag.init_pos):
@@ -130,8 +128,8 @@ def step():
                 moving(ag, envir, data_stats)
             # You reached the goal
             if(len(ag.path) == 0):
-                ag.goals.pop(0)
-                ag.state = state_transaction(ag.state, ag.goals)
+                ag.goal = (-1, -1)
+                ag.state = state_transaction(ag.state, ag.goal)
 
         #----- Loading state-----------------------------------------------------------------
         elif(ag.state == "Loading"):
@@ -152,13 +150,13 @@ def step():
                 moving(ag, envir, data_stats)
             else:
                 # Changing the state of the agent that is unloading
-                ag.state = state_transaction(ag.state, ag.goals)
+                ag.state = state_transaction(ag.state, ag.goal)
                 data_stats = data_runs(data_stats, ag, agents)
 
         #----- Unloading state-----------------------------------------------------------------
         elif(ag.state == "Unloading"):
             ag.gate, gates = free_gate(ag, gates, orders_list)
-            ag.state = state_transaction(ag.state, ag.goals)
+            ag.state = state_transaction(ag.state, ag.goal)
 
 
         #----- To_Home state-----------------------------------------------------------------
@@ -168,7 +166,7 @@ def step():
                 moving(ag, envir, data_stats)
             else:
                 data_stats = data_timesteps(data_stats, time, ag, agents)
-                ag.state = state_transaction(ag.state, ag.goals)
+                ag.state = state_transaction(ag.state, ag.goal)
         #----- To_Home state-----------------------------------------------------------------
         #elif(ag.state == "Home"):
         #    print("Sono a casuccia xD ")
@@ -200,7 +198,7 @@ def step():
                 temp_gate_loc = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
-                ag.state = state_transaction(ag.state, ag.goals)
+                ag.state = state_transaction(ag.state, ag.goal)
 
         else:
             print("Error - State is not existing.")

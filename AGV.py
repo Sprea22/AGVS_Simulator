@@ -2,27 +2,12 @@ import numpy as np
 import random as rd
 from Navigation import navigation
 
-##### ##### ##### AGV Class ##### ##### #####
-# state:
-# path:
-# goals:
-# clients:
-# id:
-# pos:
-# init_pos:
-# color:
-#-------------------------------------------
-# get_pos():
-# get_intent():
-# conflict_handler():
-##### ##### ##### ##### ##### ##### #####
-
 class AGV:
     # agent default variables initialization
     state = "Free"
     path = []
-    goals = []
-    clients = []
+    goal = (-1, -1)
+    client = ''
     gate = -1
     info_order = -1
 

@@ -14,7 +14,7 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
             orders_list["status"].iloc[index] = 2
 
     if(not(orders_list.loc[orders_list["status"] != 2].empty)):
-        info_order = [-1, -1]
+        info_order = -1
 
         if(behavior_type == 1):
             order, client, orders_list, index = getGoal_1(ag, orders_list)
@@ -31,22 +31,22 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
         return  order, client, info_order, orders_list
 
     else:
-        return [], [], -1, orders_list
+        return (-1, -1), '', -1, orders_list
 
 ##############################################################################
 # The "new_gate" function is used by the AGV in order to get the gate location
 # once they already picked up an article. The gate location depends by the client
-# INPUT: agent, in particular ag.clients[0] that contains the current client for the agent
+# INPUT: agent, in particular ag.client that contains the current client for the agent
 # OUTPUT: gate location
 ##############################################################################
 def new_gate(ag, gates):
-    if(ag.clients[0] == "A"):
+    if(ag.client == "A"):
         lp = gates[0].lp_hold(ag)
         gate = 0
-    elif(ag.clients[0] == "B"):
+    elif(ag.client == "B"):
         lp = gates[1].lp_hold(ag)
         gate = 1
-    elif(ag.clients[0] == "C"):
+    elif(ag.client == "C"):
         lp = gates[2].lp_hold(ag)
         gate = 2
     else:
@@ -77,13 +77,9 @@ def order_location(ind):
 ##############################################################################
 ##############################################################################
 def getGoal_1(ag, orders_list):
-    #print(ag.info_order)
-    #print("--------------")
-    #print(orders_list.loc[orders_list["status"] == 1])
-
     if(ag.info_order == -1): #SONO LIBERO
         if(orders_list.loc[orders_list["status"] == 0].empty):
-            return [], [], orders_list, -1
+            return (-1, -1), '', orders_list, -1
         else:
             ag.info_order = orders_list.loc[orders_list["status"] == 0].iloc[0].name
 
@@ -106,16 +102,13 @@ def getGoal_2(ag, orders_list, n_col_per_ag):
 def getGoal(ag, window_orders_list):
     if(len(window_orders_list) != 0):
         clients = window_orders_list["client"]
-        order = []
-        client = []
         for index, row in window_orders_list.iterrows():
             for column in window_orders_list:
                 if(column != "client" and column != "status"):
                     if(row[column] == 1):
                         window_orders_list["status"].iloc[index] = 1
-                        order.append(order_location(column))
-                        client.append(clients[index])
+                        order = order_location(column)
+                        client = clients[index]
                         window_orders_list[column].iloc[index] = 0
-                        print("----------------", client)
                         return order, client, window_orders_list, index
-        return [], [], window_orders_list, -1
+        return (-1, -1), '', window_orders_list, -1
