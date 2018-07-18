@@ -18,7 +18,7 @@ time = 0
 width = 50
 height = 50
 behavior_type = 0
-n_ag_per_col = 2
+n_ag_per_col = 5
 n_col_per_ag = 3
 agents = []
 gates = []
@@ -41,9 +41,10 @@ def init():
     gates.append(Gate(2, (0,37), (0,39), (0,41), (3, 41)))
     # Initializing the agents
     if(behavior_type == 1):
-        agents.append(AGV((28, 14),"red", 0))
-        agents.append(AGV((28, 24),"magenta", 0))
-        agents.append(AGV((28, 34),"blue", 0))
+        for n in range(0,n_ag_per_col):
+            agents.append(AGV((28+n, 14),"red", 0))
+            agents.append(AGV((28+n, 24),"magenta", 0))
+            agents.append(AGV((28+n, 34),"blue", 0))
 
     elif(behavior_type == 2):
         for n in range(0,n_ag_per_col):
@@ -53,10 +54,11 @@ def init():
             agents.append(AGV((28+n, 34),"orange", 11))
 
     elif(behavior_type == 3):
-        agents.append(AGV((28, 4),"red", 0))
-        agents.append(AGV((28, 14),"magenta", 0))
-        agents.append(AGV((28, 24),"blue", 0))
-        agents.append(AGV((28, 34),"orange", 0))
+        for n in range(0,n_ag_per_col):
+            agents.append(AGV((28+n, 4),"red", 0))
+            agents.append(AGV((28+n, 14),"magenta", 0))
+            agents.append(AGV((28+n, 24),"blue", 0))
+            agents.append(AGV((28+n, 34),"orange", 0))
 
     else:
         print("Error - State is not existing.")
@@ -101,8 +103,10 @@ def step():
     global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2
     # New step of time
     time += 1
-
+    print("-----------")
     for ag in agents:
+
+        print(ag.id, ag.state, ag.gate, ag.clients, ag.info_order)
         envir = envir_reset(ag, envir)
 
         #-----Free State-----------------------------------------------------------------
@@ -129,6 +133,7 @@ def step():
         elif(ag.state == "Loading"):
             lp, ag.gate, gates = new_gate(ag, gates)
             ag.state = state_transaction(ag.state, lp)
+
             if(ag.state == "To_Gate"):
                 ag.path = navigation(envir, ag.pos, lp)
             elif(ag.state == "To_WaitingPoint"):
@@ -148,12 +153,9 @@ def step():
 
         #----- Unloading state-----------------------------------------------------------------
         elif(ag.state == "Unloading"):
-            ag.gate, gates = free_gate(ag, gates)
-            if(ag.goals == []):
-                ag.state = state_transaction(ag.state, ag.goals)
-            else:
-                ag.path = navigation(envir, ag.pos, ag.goals[0])
-                ag.state = state_transaction(ag.state, ag.goals)
+            ag.gate, gates = free_gate(ag, gates, orders_list)
+            ag.state = state_transaction(ag.state, ag.goals)
+
 
         #----- To_Home state-----------------------------------------------------------------
         elif(ag.state == "To_Home"):
@@ -164,8 +166,8 @@ def step():
                 data_stats = data_timesteps(data_stats, time, ag, agents)
                 ag.state = state_transaction(ag.state, ag.goals)
         #----- To_Home state-----------------------------------------------------------------
-        elif(ag.state == "Home"):
-            print("Sono a casuccia xD ")
+        #elif(ag.state == "Home"):
+        #    print("Sono a casuccia xD ")
 
         #----- Returning_wait state-----------------------------------------------------------------
         ######### GESTIRE CONTROLLO CON STATE_TRANSACTION COSA PASSARGLI
@@ -173,13 +175,13 @@ def step():
         elif(ag.state == "To_WaitingPoint"):
             bool = (gates[ag.gate].queue_loc == ag.pos)
 
-            if(gates[ag.gate].lp_available() and len(gates[ag.gate].AGV_queue) == 0):
-                temp_gate_loc = gates[ag.gate].lp_hold()
+            if(gates[ag.gate].lp_available(ag) and len(gates[ag.gate].AGV_queue) == 0):
+                temp_gate_loc = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
                 ag.state = state_transaction(ag.state, bool)
 
-            elif(not(gates[ag.gate].lp_available()) or len(gates[ag.gate].AGV_queue) != 0):
+            elif(not(gates[ag.gate].lp_available(ag)) or len(gates[ag.gate].AGV_queue) != 0):
                 if(len(ag.path) > 0):
                     moving(ag, envir, data_stats)
                 else:
@@ -190,8 +192,8 @@ def step():
         #----- Wait state-----------------------------------------------------------------
         elif(ag.state == "Wait"):
             # Handle the case of AGV in "wait" state starving
-            if(gates[ag.gate].lp_available()):
-                temp_gate_loc = gates[ag.gate].lp_hold()
+            if(gates[ag.gate].lp_available(ag)):
+                temp_gate_loc = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
                 ag.state = state_transaction(ag.state, ag.goals)

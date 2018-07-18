@@ -13,23 +13,25 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
         if(sum(row[2:]) == 0):
             orders_list["status"].iloc[index] = 2
 
-    if(not(orders_list.loc[orders_list["status"] == 0].empty)):
+    if(not(orders_list.loc[orders_list["status"] != 2].empty)):
         info_order = [-1, -1]
 
         if(behavior_type == 1):
-            order, client, info_order, orders_list = getGoal_1(ag, orders_list)
+            order, client, orders_list, index = getGoal_1(ag, orders_list)
+            info_order = index
 
         elif(behavior_type == 2):
-            order, client, orders_list = getGoal_2(ag, orders_list, n_col_per_ag)
+            order, client, orders_list, index = getGoal_2(ag, orders_list, n_col_per_ag)
+            info_order = index
 
         elif(behavior_type == 3):
-            order, client, orders_list = getGoal(ag, orders_list)
+            order, client, orders_list, index = getGoal(ag, orders_list)
+            info_order = index
 
         return  order, client, info_order, orders_list
 
     else:
-        return [], [], [-1, -1], orders_list
-
+        return [], [], -1, orders_list
 
 ##############################################################################
 # The "new_gate" function is used by the AGV in order to get the gate location
@@ -39,21 +41,23 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
 ##############################################################################
 def new_gate(ag, gates):
     if(ag.clients[0] == "A"):
-        lp = gates[0].lp_hold()
+        lp = gates[0].lp_hold(ag)
         gate = 0
     elif(ag.clients[0] == "B"):
-        lp = gates[1].lp_hold()
+        lp = gates[1].lp_hold(ag)
         gate = 1
     elif(ag.clients[0] == "C"):
-        lp = gates[2].lp_hold()
+        lp = gates[2].lp_hold(ag)
         gate = 2
     else:
         print("Error - Client is not existing")
     return lp, gate, gates
 
-def free_gate(ag, gates):
-    gates[ag.gate].lp_free(ag.pos)
-    return -1, gates
+def free_gate(ag, gates, orders_list):
+    # Se l'ordine è finito, liberalo
+    if(orders_list["status"].iloc[ag.info_order] == 2):
+        gates[ag.gate].lp_free(ag.pos)
+    return ag.gate, gates
 
 ##############################################################################
 # The "order_location" function allows to map the items location in the environment
@@ -72,23 +76,22 @@ def order_location(ind):
 ##############################################################################
 ##############################################################################
 ##############################################################################
-
 def getGoal_1(ag, orders_list):
-    if(ag.info_order[0] != -1 and sum(orders_list.iloc[ag.info_order[0]][2:]) == 0):
-        ag.info_order[0] = -1
-    if(ag.info_order[0] == -1):
-        ag.info_order[0] = orders_list.loc[orders_list["status"] == 0].iloc[0].name
-        orders_list["status"].iloc[ag.info_order[0]] = 1
-        window_order_list = orders_list.iloc[ag.info_order[0]]
-    elif(ag.info_order[0] != -1):
-        window_order_list = orders_list.iloc[ag.info_order[0]]
+    #print(ag.info_order)
+    #print("--------------")
+    #print(orders_list.loc[orders_list["status"] == 1])
 
-    window_order_list = window_order_list.to_frame().T
+    if(ag.info_order == -1): #SONO LIBERO
+        if(orders_list.loc[orders_list["status"] == 0].empty):
+            return [], [], orders_list, -1
+        else:
+            ag.info_order = orders_list.loc[orders_list["status"] == 0].iloc[0].name
+
+    window_order_list = orders_list.iloc[ag.info_order].to_frame().T
     window_order_list.index = range(0,1)
-    order, client, window_order_list = getGoal(ag, window_order_list)
-    orders_list.iloc[ag.info_order[0]] = window_order_list.iloc[0]
-    return  order, client, ag.info_order, orders_list
-
+    order, client, window_order_list, index = getGoal(ag, window_order_list)
+    orders_list.iloc[ag.info_order] = window_order_list.iloc[0]
+    return  order, client, orders_list, ag.info_order
 
 
 def getGoal_2(ag, orders_list, n_col_per_ag):
@@ -96,11 +99,9 @@ def getGoal_2(ag, orders_list, n_col_per_ag):
     ag_columns = ["client", "status"]
     for x in orders_list.columns[ag.id : ag.id + n_col_per_ag]:
         ag_columns.append(x)
-    order, client, window_orders_list = getGoal(ag, orders_list[ag_columns])
+    order, client, window_orders_list, index = getGoal(ag, orders_list[ag_columns])
     orders_list[ag_columns] = window_orders_list
-    return order, client, orders_list
-
-
+    return order, client, orders_list, index
 
 def getGoal(ag, window_orders_list):
     if(len(window_orders_list) != 0):
@@ -111,9 +112,10 @@ def getGoal(ag, window_orders_list):
             for column in window_orders_list:
                 if(column != "client" and column != "status"):
                     if(row[column] == 1):
-                         order.append(order_location(column))
-                         client.append(clients[index])
-                         window_orders_list[column].iloc[index] = 0
-                         print("----------", order, client)
-                         return order, client, window_orders_list
-        return [], [], window_orders_list
+                        window_orders_list["status"].iloc[index] = 1
+                        order.append(order_location(column))
+                        client.append(clients[index])
+                        window_orders_list[column].iloc[index] = 0
+                        print("----------------", client)
+                        return order, client, window_orders_list, index
+        return [], [], window_orders_list, -1

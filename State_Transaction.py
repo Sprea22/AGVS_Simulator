@@ -30,9 +30,6 @@ def state_transaction(state, goal):
     elif(state == "Unloading" and len(goal) == 0):
         return "Free"
 
-    elif(state == "Unloading" and len(goal) != 0):
-        return "To_Goal"
-
     elif(state == "Home"):
         return "--------------------------------"
 
