@@ -115,8 +115,12 @@ def step():
             ag.state = state_transaction(ag.state, ag.goals)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goals[0])
+                moving(ag, envir, data_stats)
             elif(ag.state == "To_Home"):
-                ag.path = navigation(envir,ag.pos, ag.init_pos)
+                if(ag.pos != ag.init_pos):
+                    ag.path = navigation(envir,ag.pos, ag.init_pos)
+                    moving(ag, envir, data_stats)
+
             else:
                 print("Error - State is not existing.")
 
