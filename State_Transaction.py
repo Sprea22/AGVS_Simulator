@@ -15,17 +15,17 @@ def state_transaction(state, goal):
     elif(state == "To_Home"):
         return "Home"
 
-    elif(state == "To_WaitingPoint" and not(goal)):
+    elif(state == "To_WaitP" and not(goal)):
         return "To_Gate"
 
-    elif(state == "To_WaitingPoint" and goal):
+    elif(state == "To_WaitP" and goal):
         return "Wait"
 
     elif(state == "Loading" and goal != (-1, -1)):
         return "To_Gate"
 
     elif(state == "Loading" and goal == (-1, -1)):
-        return "To_WaitingPoint"
+        return "To_WaitP"
 
     elif(state == "Unloading" and goal == (-1, -1)):
         return "Free"

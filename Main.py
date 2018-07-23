@@ -15,17 +15,12 @@ from Gate import *
 
 # Default input parameters
 time = 0
-width = 50
-height = 50
 behavior_type = 0
-n_ag_per_col = 5
+width = 50; height = 50
+n_ag_per_col = 1
 n_col_per_ag = 3
-agents = []
-gates = []
+agents = []; gates = []; data_stats = []
 orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
-# [0] = number of conflicts, [1] = number of waits during a conflict , [2] = number of paths changed during a conflict
-# [3] = number of run (returned article)
-data_stats = []
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -64,7 +59,7 @@ def init():
         print("Error - State is not existing.")
 
     # Initializing the dataframe that is going to be used in order to collect the data about the simulation
-    data_stats = init_dataStats(3, data_stats, agents)
+    data_stats = init_dataStats(data_stats, agents)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -135,10 +130,11 @@ def step():
         elif(ag.state == "Loading"):
             lp, ag.gate, gates = new_gate(ag, gates)
             ag.state = state_transaction(ag.state, lp)
-
+            # If there's a free location at the destination gate, just navigate to it.
             if(ag.state == "To_Gate"):
                 ag.path = navigation(envir, ag.pos, lp)
-            elif(ag.state == "To_WaitingPoint"):
+            # If all the gate's locations are busy, just go to the gate's queue
+            elif(ag.state == "To_WaitP"):
                 gates[ag.gate].AGV_queue.append(ag)
                 wait_loc = gates[ag.gate].queue_loc
                 ag.path = navigation(envir, ag.pos, wait_loc)
@@ -151,7 +147,7 @@ def step():
             else:
                 # Changing the state of the agent that is unloading
                 ag.state = state_transaction(ag.state, ag.goal)
-                data_stats = data_runs(data_stats, ag, agents)
+                data_stats = data_articles(data_stats, ag, agents)
 
         #----- Unloading state-----------------------------------------------------------------
         elif(ag.state == "Unloading"):
@@ -165,35 +161,32 @@ def step():
                 # Moving to home
                 moving(ag, envir, data_stats)
             else:
+                # The AGV is arrived at home: change its state and save the timestep
                 data_stats = data_timesteps(data_stats, time, ag, agents)
                 ag.state = state_transaction(ag.state, ag.goal)
-        #----- To_Home state-----------------------------------------------------------------
-        #elif(ag.state == "Home"):
-        #    print("Sono a casuccia xD ")
 
         #----- Returning_wait state-----------------------------------------------------------------
-        ######### GESTIRE CONTROLLO CON STATE_TRANSACTION COSA PASSARGLI
-        #############
-        elif(ag.state == "To_WaitingPoint"):
+        elif(ag.state == "To_WaitP"):
             bool = (gates[ag.gate].queue_loc == ag.pos)
-
+            # If there is a place available in the destination Gate AND there isn't an another AGV waiting for it,
+            # just reserve it and calculate the path to that location.
             if(gates[ag.gate].lp_available(ag) and len(gates[ag.gate].AGV_queue) == 0):
                 temp_gate_loc = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
                 ag.state = state_transaction(ag.state, bool)
-
+            # Move to the waiting location of the destination gate
             elif(not(gates[ag.gate].lp_available(ag)) or len(gates[ag.gate].AGV_queue) != 0):
                 if(len(ag.path) > 0):
                     moving(ag, envir, data_stats)
                 else:
-                    # Changing the state of the agent that is unloadin
                     ag.state = state_transaction(ag.state, bool)
-                    data_stats = data_runs(data_stats, ag, agents)
 
         #----- Wait state-----------------------------------------------------------------
         elif(ag.state == "Wait"):
-            # Handle the case of AGV in "wait" state starving
+            data_stats = data_wait_gate(data_stats, ag, agents)
+            # If there is a place available in the destination Gate, just reserve it
+            # and calculate the path to that location.
             if(gates[ag.gate].lp_available(ag)):
                 temp_gate_loc = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
@@ -201,7 +194,9 @@ def step():
                 ag.state = state_transaction(ag.state, ag.goal)
 
         else:
-            print("Error - State is not existing.")
+            #----- To_Home state-----------------------------------------------------------------
+            if(ag.state != "Home"):
+                print("Error - State is not existing.")
 
         # The agent update the Environment with its location and its intention
         #envir = ag.update_envir(envir, old_params)
@@ -210,7 +205,8 @@ def step():
         if(ag.state != "Home"):
             break
         else:
-            data_stats.to_csv("Test.csv")
+            csv_name = "BT"+str(behavior_type)+"_AC"+ str(n_ag_per_col)+"_Stats.csv"
+            data_stats.to_csv("Results/"+csv_name)
 
 
 #------------------------------------------------------------------------------
@@ -226,10 +222,16 @@ def moving(ag, envir, data_stats):
 from Pycx_Simulator import pycxsimulator
 
 # The following function allow to dynamic change the "behavior_type" variable value using the GUI
-def behavior_typeF (val=behavior_type):
+def Behavior_Type (val=behavior_type):
     global behavior_type
     behavior_type = int(val)
     return val
 
-pSetters = [behavior_typeF]
+# The following function allow to dynamic change the "n_ag_per_col" variable value using the GUI
+def Numb_Of_AGVs_For_Corridor (val=n_ag_per_col):
+    global n_ag_per_col
+    n_ag_per_col = int(val)
+    return val
+
+pSetters = [Behavior_Type, Numb_Of_AGVs_For_Corridor]
 pycxsimulator.GUI(parameterSetters = pSetters).start(func=[init,draw,step])
