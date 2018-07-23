@@ -1,12 +1,15 @@
 import pandas as pd
 
-def init_dataStats(data_stats, agents):
+def init_dataStats(data_stats, total_stats, agents):
+    total_stats = pd.DataFrame(columns=["AGV", "Conflicts", "Conflict_Wait", "Conflict_Path", "Waiting_Gate", "Articles", "Moving_Steps", "Time_Steps"])
     data_stats = pd.DataFrame(columns=["AGV", "Conflicts", "Conflict_Wait", "Conflict_Path", "Waiting_Gate", "Articles", "Moving_Steps", "Time_Steps"])
-    for i in range(0,len(agents)):
+    for i in range(0,len(agents)+1):
         data_stats.loc[i] = 0
         data_stats["AGV"].iloc[i] = i
+        if(i == len(agents)):
+            data_stats["AGV"].iloc[len(agents)] = "Total"
     data_stats.set_index('AGV', inplace=True)
-    return data_stats
+    return total_stats, data_stats
 
 def data_conflicts_and_step(data_stats, conflict_bool, ag, agents):
     if(conflict_bool != 0):

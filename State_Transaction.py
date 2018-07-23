@@ -1,37 +1,23 @@
-
 def state_transaction(state, goal):
-    if(state == "Free" and goal != (-1, -1)):
-        return "To_Goal"
+    map_transaction = {
+    ("Free", goal != (-1, -1)) : "To_Goal",
+    ("Free", goal == (-1, -1)) : "To_Home",
+    ("To_Goal", goal) : "Loading",
+    ("To_Gate", goal) : "Unloading",
+    ("To_Home", goal) : "Home",
+    ("To_WaitP", not(goal)) : "To_Gate",
+    ("To_WaitP", goal) : "Wait",
+    ("Loading", goal != (-1, -1)) : "To_Gate",
+    ("Loading", goal == (-1, -1)) : "To_WaitP",
+    ("Unloading", goal) : "Free",
+    ("Home", goal) : "----------------",
+    ("Wait", goal) : "To_Gate",
+    }
 
-    elif(state == "Free" and goal == (-1, -1)):
-        return "To_Home"
-
-    elif(state == "To_Goal"):
-        return "Loading"
-
-    elif(state == "To_Gate"):
-        return "Unloading"
-
-    elif(state == "To_Home"):
-        return "Home"
-
-    elif(state == "To_WaitP" and not(goal)):
-        return "To_Gate"
-
-    elif(state == "To_WaitP" and goal):
-        return "Wait"
-
-    elif(state == "Loading" and goal != (-1, -1)):
-        return "To_Gate"
-
-    elif(state == "Loading" and goal == (-1, -1)):
-        return "To_WaitP"
-
-    elif(state == "Unloading" and goal == (-1, -1)):
-        return "Free"
-
-    elif(state == "Home"):
-        return "--------------------------------"
-
-    elif(state == "Wait"):
-        return "To_Gate"
+    for i in map_transaction.keys():
+        if(type(i[1]) != type(True)):
+            if(i[0] == state):
+                return map_transaction[i]
+        else:
+            if(i[0] == state and i[1] == True):
+                return map_transaction[i]

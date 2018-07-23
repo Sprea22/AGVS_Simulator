@@ -14,18 +14,19 @@ from Data_Stats import *
 from Gate import *
 
 # Default input parameters
+orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
 time = 0
 behavior_type = 0
 width = 50; height = 50
 n_ag_per_col = 1
 n_col_per_ag = 3
-agents = []; gates = []; data_stats = []
-orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
+total_numb_orders = str(len(orders_list.index))
+agents = []; gates = []; data_stats = []; total_stats = []
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
-    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y
+    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y, total_stats
 
     # Initilizing the environement
     envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
@@ -59,11 +60,13 @@ def init():
         print("Error - State is not existing.")
 
     # Initializing the dataframe that is going to be used in order to collect the data about the simulation
-    data_stats = init_dataStats(data_stats, agents)
+    total_stats, data_stats = init_dataStats(data_stats, total_stats, agents)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def draw():
+    grid = pl.GridSpec(3, 2, wspace=0.4, hspace=0.3)
+    pl.subplot(grid[0:, 0])
     pl.cla()
     pl.pcolor(envir, cmap = pl.cm.YlOrRd, vmin = 0, vmax = 15)
     pl.axis('image')
@@ -85,8 +88,27 @@ def draw():
             goals = ag.goal
             # Plot the agent's goal on the matrix
             pl.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
-    pl.hold(False)
     pl.title('t = ' + str(time))
+
+    ax2 = pl.subplot(grid[0, 1])
+    ax2.axis("off")
+    ax2.invert_yaxis()
+    to_plot_string1 = "\nTotal orders: "+ total_numb_orders + "\nDone orders: "+ str(len(orders_list[orders_list["status"] == 2].index))
+    ax2.text(0,0, to_plot_string1, verticalalignment="top")
+
+    pl.subplot(grid[1, 1])
+    x = range(0, len(total_stats))
+    pl.plot(x,  total_stats["Articles"], color = 'blue')
+    pl.hold(True)
+    pl.title('Articles')
+
+    pl.subplot(grid[2, 1])
+    x = range(0, len(total_stats))
+    pl.plot(x,  total_stats["Conflicts"], color = 'red')
+    pl.hold(True)
+    pl.title('Conflicts')
+
+    pl.hold(False)
 
     ################ ################ ################ ################ ################
     # NEL FILE "PYCXSIMULATOR" QUESTO METODO è CHIAMATO self.modelDrawFunc() ALLA RIGA 244
@@ -95,7 +117,7 @@ def draw():
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def step():
-    global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2
+    global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2, total_stats
     # New step of time
     time += 1
     for ag in agents:
@@ -201,12 +223,18 @@ def step():
         # The agent update the Environment with its location and its intention
         #envir = ag.update_envir(envir, old_params)
         envir = update_envir(ag, envir)
-    for ag in agents:
-        if(ag.state != "Home"):
-            break
-        else:
-            csv_name = "BT"+str(behavior_type)+"_AC"+ str(n_ag_per_col)+"_Stats.csv"
-            data_stats.to_csv("Results/"+csv_name)
+
+    for column in data_stats[data_stats.index != "Total"].columns:
+        data_stats.set_value("Total", column, sum(data_stats[data_stats.index != "Total"][column]))
+    total_stats = total_stats.append(data_stats.iloc[-1])
+    csv_name = "BT"+str(behavior_type)+"_AC"+ str(n_ag_per_col)+"_Stats.csv"
+    data_stats.to_csv("Results/"+csv_name)
+    #for ag in agents:
+    #    if(ag.state != "Home"):
+    #        break
+    #    else:
+    #        csv_name = "BT"+str(behavior_type)+"_AC"+ str(n_ag_per_col)+"_Stats.csv"
+    #        data_stats.to_csv("Results/"+csv_name)
 
 
 #------------------------------------------------------------------------------
