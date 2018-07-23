@@ -1,4 +1,5 @@
 AGV,Conflicts,Conflict_Wait,Conflict_Path,Waiting_Gate,Articles,Moving_Steps,Time_Steps
-0,5,1,4,0,8,487,513
-1,5,1,4,0,8,461,487
-2,7,2,5,0,8,458,485
+0,0,0,0,0,0,0,2
+1,0,0,0,0,0,0,2
+2,0,0,0,0,12,502,539
+3,0,0,0,0,12,865,902

@@ -77,6 +77,9 @@ def order_location(ind):
 ##############################################################################
 ##############################################################################
 def getGoal_1(ag, orders_list):
+    if(sum(orders_list.iloc[ag.info_order][2:]) == 0):
+        ag.info_order = -1
+
     if(ag.info_order == -1): #SONO LIBERO
         if(orders_list.loc[orders_list["status"] == 0].empty):
             return (-1, -1), '', orders_list, -1
@@ -86,6 +89,7 @@ def getGoal_1(ag, orders_list):
     window_order_list = orders_list.iloc[ag.info_order].to_frame().T
     window_order_list.index = range(0,1)
     order, client, window_order_list, index = getGoal(ag, window_order_list)
+
     orders_list.iloc[ag.info_order] = window_order_list.iloc[0]
     return  order, client, orders_list, ag.info_order
 

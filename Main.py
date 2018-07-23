@@ -37,9 +37,9 @@ def init():
     # Initializing the agents
     if(behavior_type == 1):
         for n in range(0,n_ag_per_col):
-            agents.append(AGV((28+n, 14),"red", 0))
-            agents.append(AGV((28+n, 24),"magenta", 0))
-            agents.append(AGV((28+n, 34),"blue", 0))
+            agents.append(AGV((28+n, 14),"red", 100))
+            agents.append(AGV((28+n, 24),"magenta", 200))
+            agents.append(AGV((28+n, 34),"blue", 300))
 
     elif(behavior_type == 2):
         for n in range(0,n_ag_per_col):

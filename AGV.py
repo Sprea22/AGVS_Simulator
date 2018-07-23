@@ -42,9 +42,9 @@ class AGV:
         # Data stats: no conflict
         conflict_bool = 0
         pos_temp = self.path[0]
-        envir_temp = envir[pos_temp]
+        envir_temp = envir[pos_temp] 
         if(envir[self.path[0]] != 0):
-            # Data stats: conflit and wait
+            # Data stats: conflict and wait
             conflict_bool = 1
             envir[self.path[0]] = 0.01
             if(len(self.path) > 1):
