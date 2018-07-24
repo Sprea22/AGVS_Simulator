@@ -17,7 +17,7 @@ from Gate import *
 orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
 time = 0
 behavior_type = 0
-width = 50; height = 50
+width = 48; height = 43
 n_ag_per_col = 1
 n_col_per_ag = 3
 total_numb_orders = str(len(orders_list.index))
@@ -26,10 +26,10 @@ agents = []; gates = []; data_stats = []; total_stats = []
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
-    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y, total_stats
+    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y, total_stats, office_x, office_y
 
     # Initilizing the environement
-    envir, wall_x, wall_y, gate_x, gate_y = envir_configuration(width, height)
+    envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y = envir_configuration(width, height)
 
     # Initilizing the gate objects
     gates.append(Gate(0, (0,9), (0,11), (0,13), (3,9)))
@@ -73,6 +73,8 @@ def draw():
     pl.hold(True)
     # Plot the walls on the matrix
     pl.scatter(np.add(wall_x, [0.5]), np.add(wall_y, [0.5]), marker = "s", c = 'gray')
+    # Plot the office on the matrix
+    pl.scatter(np.add(office_x, [0.5]), np.add(office_y, [0.5]), marker = "s", c = 'gray')
     # Plot the gates on the matrix
     pl.scatter(np.add(gate_x, [0.5]), np.add(gate_y, [0.5]), marker = "s", c = 'green')
     # For each agent plot: location, intention, goal
