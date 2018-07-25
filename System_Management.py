@@ -21,7 +21,7 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
             info_order = index
 
         elif(behavior_type == 2):
-            order, client, orders_list, index = getGoal_2(ag, orders_list, n_col_per_ag)
+            order, client, orders_list, index = getGoal_2(ag, orders_list)
             info_order = index
 
         elif(behavior_type == 3):
@@ -40,13 +40,13 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
 # OUTPUT: gate location
 ##############################################################################
 def new_gate(ag, gates):
-    if(ag.client == "A"):
+    if(ag.client == "MI"):
         lp = gates[0].lp_hold(ag)
         gate = 0
-    elif(ag.client == "B"):
+    elif(ag.client == "CO"):
         lp = gates[1].lp_hold(ag)
         gate = 1
-    elif(ag.client == "C"):
+    elif(ag.client == "FI"):
         lp = gates[2].lp_hold(ag)
         gate = 2
     else:
@@ -64,9 +64,19 @@ def free_gate(ag, gates, orders_list):
 # INPUT: an integer variable "ind"
 # OUPUT: the location of the article in the "ind" position of the map_locations
 ##############################################################################
+
 def order_location(ind):
-    map_locations = {"shoes_R": (35,7), "shoes_G": (11,7), "shoes_B": (20,13), "tshirt_R" : (28,16), "tshirt_G" : (40,16), "tshirt_B" : (28,23),
-    "pullover_R" : (19,26), "pullover_G" : (31,33), "pullover_B" : (15,33), "hat_R" : (42,36), "hat_G" : (24,42), "hat_B" : (45,41)}
+    map_locations = {   "PILE S" : (18,5),  "PILE ALTA VISIBILITA'" : (24,6),  "PILE L" : (30,5),  "PILE ARANCIO" : (36,6)
+                    , "GIUBBETTO" : (18,10), "ELMETTO" : (24,11), "FELPA" : (30,10), "TUTA" : (36,11)
+                    , "PANTALONE LAVORO S" : (18,15), "PANTALONE LAVORO M" : (24,16), "PANTALONE LAVORO L" : (30,15), "PANTALONE ARANCIO" : (36,16)
+                    , "PANTALONE JEANS S" : (18,20), "PANTALONE JEANS M" : (24,21), "PANTALONE JEANS L" : (30,20), "PANTALONE" : (36,21)
+                    , "SCARPA BASSA" : (18,25), "SCARPA BASSA STRONG" : (24,26), "MAGLIETTA" : (30,25), "CAMICIA" : (36,26)
+                    , "SCARPA ALTA  HARD" : (18,30), "SCARPA ASFALTISTA" : (24,31), "SCARPA ALTA ASFALTISTA" : (30,30), "SCARPA ALTA SCOTLAND" :(36,31)
+                    , "SCARPA ALTA INVERNALE S" : (18,35), "SCARPA ALTA INVERNALE M" : (24,36), "SCARPA ALTA INVERNALE L" : (30,35), "SCARPA ALTA INVERNALE XL" :(36,36)
+                    , "SCARPA ALTA STONE S" : (18,40), "SCARPA ALTA STONE M" : (24,41), "SCARPA ALTA STONE L" : (30,40), "STIVALE" :(36,41)}
+
+    #map_locations = {"shoes_R": (15,4), "shoes_G": (30,4), "shoes_B": (15, 7), "tshirt_R" : (30, 7), "tshirt_G" : (15, 9), "tshirt_B" : (30, 9),
+    #"pullover_R" : (15,12), "pullover_G" : (30,12), "pullover_B" : (15,14), "hat_R" : (30, 14), "hat_G" : (15,17), "hat_B" : (30,17)}
     for i in map_locations.keys():
         if(i == ind):
             return map_locations[i]
@@ -94,13 +104,10 @@ def getGoal_1(ag, orders_list):
     return  order, client, orders_list, ag.info_order
 
 
-def getGoal_2(ag, orders_list, n_col_per_ag):
+def getGoal_2(ag, orders_list):
     # Si può mettere nell'inizializzazione degli AGV una volta sola nel main
-    ag_columns = ["client", "status"]
-    for x in orders_list.columns[ag.id : ag.id + n_col_per_ag]:
-        ag_columns.append(x)
-    order, client, window_orders_list, index = getGoal(ag, orders_list[ag_columns])
-    orders_list[ag_columns] = window_orders_list
+    order, client, window_orders_list, index = getGoal(ag, orders_list[ag.id])
+    orders_list[ag.id] = window_orders_list
     return order, client, orders_list, index
 
 def getGoal(ag, window_orders_list):
@@ -109,10 +116,10 @@ def getGoal(ag, window_orders_list):
         for index, row in window_orders_list.iterrows():
             for column in window_orders_list:
                 if(column != "client" and column != "status"):
-                    if(row[column] == 1):
+                    if(row[column] != 0):
                         window_orders_list["status"].iloc[index] = 1
                         order = order_location(column)
                         client = clients[index]
-                        window_orders_list[column].iloc[index] = 0
+                        window_orders_list[column].iloc[index] -= 1
                         return order, client, window_orders_list, index
         return (-1, -1), '', window_orders_list, -1

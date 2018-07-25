@@ -20,4 +20,8 @@ orders_list.loc[9] = ["A", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]
 orders_list.loc[10] = ["B", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]
 orders_list.loc[11] = ["C", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]
 
+orders_list.loc[12] = ["A", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+orders_list.loc[13] = ["B", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+orders_list.loc[14] = ["C", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+
 orders_list.to_csv("orders_list.csv")

@@ -14,7 +14,7 @@ from Data_Stats import *
 from Gate import *
 
 # Default input parameters
-orders_list = pd.read_csv("Utility/orders_list.csv", index_col=0)
+orders_list = pd.read_csv("Utility/Total_Orders.csv", index_col=0)
 time = 0
 behavior_type = 0
 width = 48; height = 43
@@ -22,7 +22,7 @@ n_ag_per_col = 1
 n_col_per_ag = 3
 total_numb_orders = str(len(orders_list.index))
 agents = []; gates = []; data_stats = []; total_stats = []
-
+N_AGV = 10
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
@@ -32,32 +32,39 @@ def init():
     envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y = envir_configuration(width, height)
 
     # Initilizing the gate objects
-    gates.append(Gate(0, (0,9), (0,11), (0,13), (3,9)))
-    gates.append(Gate(1, (0,23), (0,25), (0,27), (3, 25)))
-    gates.append(Gate(2, (0,37), (0,39), (0,41), (3, 41)))
-    # Initializing the agents
+    gates.append(Gate(0, (0,31), (0,32), (0,33), (3,29)))
+    gates.append(Gate(1, (0,37), (0,38), (0,39), (3, 38)))
+    gates.append(Gate(2, (0,43), (0,44), (0,45), (3, 47)))
+# Initializing the agents
     if(behavior_type == 1):
-        for n in range(0,n_ag_per_col):
-            agents.append(AGV((28+n, 14),"red", 100))
-            agents.append(AGV((28+n, 24),"magenta", 200))
-            agents.append(AGV((28+n, 34),"blue", 300))
+        for i in range(0, N_AGV):
+            agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i))
 
     elif(behavior_type == 2):
-        for n in range(0,n_ag_per_col):
-            agents.append(AGV((28+n, 4),"red", 2))
-            agents.append(AGV((28+n, 14),"magenta", 5))
-            agents.append(AGV((28+n, 24),"blue", 8))
-            agents.append(AGV((28+n, 34),"orange", 11))
+        for i in range(0, N_AGV):
+            agents.append(AGV((42, i + 1 + (i*2) ),"red", ["client", "status"]))
+
+        columns = orders_list.columns[2:]
+        n_col = len(columns)
+
+        i = 0
+        if(n_col > N_AGV):
+            for c in columns:
+                if(i < N_AGV):
+                    temp = agents[i].id
+                    temp.append(c)
+                    agents[i].id = temp
+                    i = i + 1
+                else:
+                    i = 0
+        else:
+            print("Error - Too many AGVs ")
 
     elif(behavior_type == 3):
-        for n in range(0,n_ag_per_col):
-            agents.append(AGV((28+n, 4),"red", 0))
-            agents.append(AGV((28+n, 14),"magenta", 0))
-            agents.append(AGV((28+n, 24),"blue", 0))
-            agents.append(AGV((28+n, 34),"orange", 0))
-
+        for i in range(0, N_AGV):
+            agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i))
     else:
-        print("Error - State is not existing.")
+        print("Error - Behavior_Type is not existing.")
 
     # Initializing the dataframe that is going to be used in order to collect the data about the simulation
     total_stats, data_stats = init_dataStats(data_stats, total_stats, agents)
@@ -122,8 +129,8 @@ def step():
     global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2, total_stats
     # New step of time
     time += 1
-    for ag in agents:
 
+    for ag in agents:
         envir = envir_reset(ag, envir)
 
         #-----Free State-----------------------------------------------------------------
