@@ -41,19 +41,16 @@ class AGV:
     def conflict_handler(self, envir):
         # Data stats: no conflict
         conflict_bool = 0
-
         # The following three values are used to restore the "temp walls" created
         # around the current AGV
         temp_reset = []
         val_temp_reset = []
         path_okay = False
-
         pos_temp = self.path[0]
         envir_temp = envir[pos_temp]
         if(envir[self.path[0]] == 15):
             # Data stats: conflict and wait
             conflict_bool = 1
-
             envir[self.path[0]] = 0.01
             if(len(self.path) > 1):
                 # Data stats: conflict and path change
@@ -62,7 +59,6 @@ class AGV:
                 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
                 while not(path_okay):
                     if(envir[conflict_path[0]] == 15):
-                        print("Sono qui")
                         temp_reset.append(conflict_path[0])
                         val_temp_reset.append(envir[conflict_path[0]])
                         envir[conflict_path[0]] = 0.01
@@ -73,7 +69,7 @@ class AGV:
                 self.path = conflict_path[0:len(conflict_path)-1] + self.path[1:]
             else:
                 self.path = [self.pos] + self.path
-                
+
         ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
         for i in range(0, len(temp_reset)):
             envir[temp_reset[i]] = val_temp_reset[i]

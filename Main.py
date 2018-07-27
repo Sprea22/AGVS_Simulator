@@ -5,6 +5,7 @@ matplotlib.use('TkAgg')
 warnings.filterwarnings("ignore")
 
 # Functions
+from Pycx_Simulator import pycxsimulator
 from Environment_Conf import *
 from AGV import AGV
 from Navigation import *
@@ -18,11 +19,10 @@ orders_list = pd.read_csv("Utility/Total_Orders.csv", index_col=0)
 time = 0
 behavior_type = 0
 width = 48; height = 43
-n_ag_per_col = 1
+N_AGV = 1
 n_col_per_ag = 3
 total_numb_orders = str(len(orders_list.index))
 agents = []; gates = []; data_stats = []; total_stats = []
-N_AGV = 10
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
@@ -35,7 +35,8 @@ def init():
     gates.append(Gate(0, (0,31), (0,32), (0,33), (3,29)))
     gates.append(Gate(1, (0,37), (0,38), (0,39), (3, 38)))
     gates.append(Gate(2, (0,43), (0,44), (0,45), (3, 47)))
-# Initializing the agents
+
+    # Initializing the agents
     if(behavior_type == 1):
         for i in range(0, N_AGV):
             agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i))
@@ -43,10 +44,8 @@ def init():
     elif(behavior_type == 2):
         for i in range(0, N_AGV):
             agents.append(AGV((42, i + 1 + (i*2) ),"red", ["client", "status"]))
-
         columns = orders_list.columns[2:]
         n_col = len(columns)
-
         i = 0
         if(n_col > N_AGV):
             for c in columns:
@@ -69,9 +68,11 @@ def init():
     # Initializing the dataframe that is going to be used in order to collect the data about the simulation
     total_stats, data_stats = init_dataStats(data_stats, total_stats, agents)
 
-#------------------------------------------------------------------------------
-#------------------------------------------------------------------------------
+
+############# ############# ############# ############# #############
+############# ############# ############# ############# #############
 def draw():
+    #-----Simulation map plot-----------------------------------------------------------------
     grid = pl.GridSpec(3, 2, wspace=0.4, hspace=0.3)
     pl.subplot(grid[0:, 0])
     pl.cla()
@@ -89,42 +90,32 @@ def draw():
         # Plot the agent's location on the matrix
         x, y = ag.get_pos()
         pl.scatter(x + 0.5, y + 0.5, c = "dark" + ag.color)
-        if(len(ag.path) > 0):
-            intent = ag.path[0]
-            # Plot the agent's intention on the matrix
-    #       pl.scatter(intent[1] + 0.5, intent[0] + 0.5, c = ag.color)
         if(len(ag.goal) > 0):
             goals = ag.goal
             # Plot the agent's goal on the matrix
             pl.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
     pl.title('t = ' + str(time))
-
+    #-----Stats text: Orders -----------------------------------------------------------------
     ax2 = pl.subplot(grid[0, 1])
     ax2.axis("off")
     ax2.invert_yaxis()
     to_plot_string1 = "\nTotal orders: "+ total_numb_orders + "\nDone orders: "+ str(len(orders_list[orders_list["status"] == 2].index))
     ax2.text(0,0, to_plot_string1, verticalalignment="top")
-
+    #-----1° Stats plot: Articles-----------------------------------------------------------------
     pl.subplot(grid[1, 1])
     x = range(0, len(total_stats))
     pl.plot(x,  total_stats["Articles"], color = 'blue')
-    pl.hold(True)
     pl.title('Articles')
-
+    #-----2° Stats plot: Conflicts-----------------------------------------------------------------
     pl.subplot(grid[2, 1])
     x = range(0, len(total_stats))
     pl.plot(x,  total_stats["Conflicts"], color = 'red')
-    pl.hold(True)
     pl.title('Conflicts')
 
     pl.hold(False)
 
-    ################ ################ ################ ################ ################
-    # NEL FILE "PYCXSIMULATOR" QUESTO METODO è CHIAMATO self.modelDrawFunc() ALLA RIGA 244
-    ################ ################ ################ ################ ################
-
-#------------------------------------------------------------------------------
-#------------------------------------------------------------------------------
+############# ############# ############# ############# #############
+############# ############# ############# ############# #############
 def step():
     global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2, total_stats
     # New step of time
@@ -139,19 +130,18 @@ def step():
             ag.state = state_transaction(ag.state, ag.goal)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goal)
-                moving(ag, envir, data_stats)
+                ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
             elif(ag.state == "To_Home"):
                 if(ag.pos != ag.init_pos):
                     ag.path = navigation(envir,ag.pos, ag.init_pos)
-                    moving(ag, envir, data_stats)
-
+                    ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
             else:
                 print("Error - State is not existing.")
 
         #-----Ongoing State-----------------------------------------------------------------
         elif(ag.state == "To_Goal"):
             if(len(ag.path) > 0):
-                moving(ag, envir, data_stats)
+                ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
             # You reached the goal
             if(len(ag.path) == 0):
                 ag.goal = (-1, -1)
@@ -174,7 +164,7 @@ def step():
         elif(ag.state == "To_Gate"):
             if(len(ag.path) > 0):
                 # Moving to the gate
-                moving(ag, envir, data_stats)
+                ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
             else:
                 # Changing the state of the agent that is unloading
                 ag.state = state_transaction(ag.state, ag.goal)
@@ -185,12 +175,11 @@ def step():
             ag.gate, gates = free_gate(ag, gates, orders_list)
             ag.state = state_transaction(ag.state, ag.goal)
 
-
         #----- To_Home state-----------------------------------------------------------------
         elif(ag.state == "To_Home"):
             if(len(ag.path) > 0):
                 # Moving to home
-                moving(ag, envir, data_stats)
+                ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
             else:
                 # The AGV is arrived at home: change its state and save the timestep
                 data_stats = data_timesteps(data_stats, time, ag, agents)
@@ -209,7 +198,7 @@ def step():
             # Move to the waiting location of the destination gate
             elif(not(gates[ag.gate].lp_available(ag)) or len(gates[ag.gate].AGV_queue) != 0):
                 if(len(ag.path) > 0):
-                    moving(ag, envir, data_stats)
+                    ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
                 else:
                     ag.state = state_transaction(ag.state, bool)
 
@@ -223,7 +212,6 @@ def step():
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
                 ag.state = state_transaction(ag.state, ag.goal)
-
         else:
             #----- To_Home state-----------------------------------------------------------------
             if(ag.state != "Home"):
@@ -236,27 +224,11 @@ def step():
     for column in data_stats[data_stats.index != "Total"].columns:
         data_stats.set_value("Total", column, sum(data_stats[data_stats.index != "Total"][column]))
     total_stats = total_stats.append(data_stats.iloc[-1])
-    csv_name = "BT"+str(behavior_type)+"_AC"+ str(n_ag_per_col)+"_Stats.csv"
+    csv_name = "BT"+str(behavior_type)+"_AC"+ str(N_AGV)+"_Stats.csv"
     data_stats.to_csv("Results/"+csv_name)
-    #for ag in agents:
-    #    if(ag.state != "Home"):
-    #        break
-    #    else:
-    #        csv_name = "BT"+str(behavior_type)+"_AC"+ str(n_ag_per_col)+"_Stats.csv"
-    #        data_stats.to_csv("Results/"+csv_name)
 
-
-#------------------------------------------------------------------------------
-def moving(ag, envir, data_stats):
-    ag.path, conflict_bool = ag.conflict_handler(envir)
-    data_stats = data_conflicts_and_step(data_stats, conflict_bool, ag, agents)
-    ag.pos = ag.path[0]
-    ag.path.pop(0)
-    return ag, envir, data_stats
-
-
-#------------------------------------------------------------------------------
-from Pycx_Simulator import pycxsimulator
+############# ############# ############# ############# #############
+############# ############# ############# ############# #############
 
 # The following function allow to dynamic change the "behavior_type" variable value using the GUI
 def Behavior_Type (val=behavior_type):
@@ -264,11 +236,11 @@ def Behavior_Type (val=behavior_type):
     behavior_type = int(val)
     return val
 
-# The following function allow to dynamic change the "n_ag_per_col" variable value using the GUI
-def Numb_Of_AGVs_For_Corridor (val=n_ag_per_col):
-    global n_ag_per_col
-    n_ag_per_col = int(val)
+# The following function allow to dynamic change the "N_AGV" variable value using the GUI
+def Numb_Of_AGVs (val=N_AGV):
+    global N_AGV
+    N_AGV = int(val)
     return val
 
-pSetters = [Behavior_Type, Numb_Of_AGVs_For_Corridor]
+pSetters = [Behavior_Type, Numb_Of_AGVs]
 pycxsimulator.GUI(parameterSetters = pSetters).start(func=[init,draw,step])

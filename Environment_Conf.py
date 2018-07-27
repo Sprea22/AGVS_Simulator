@@ -12,8 +12,8 @@ def envir_configuration(width, height):
     wall_y = np.array([range(13,40)] * 16).flatten('K')
 
     # Set OFFICES
-    office_x = list(range(0,24)) + [24] * 10
-    office_y = [9]*24 + list(range(0,10))
+    office_x = list(range(0,24)) + list(range(0,24)) + [8] * 10 + [16] * 10 + [24] * 10
+    office_y = [9]*24 + [4]*24 + list(range(0,10)) + list(range(0,10)) + list(range(0,10))
 
     # Set GOAL
     goals = [(18,5),(24,6),(30,5),(36,6)
@@ -53,17 +53,12 @@ def envir_configuration(width, height):
     return envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y
 
 def envir_reset(ag, envir):
-    #if(envir[ag.pos] == 15):
     envir[ag.pos] =  0
-    #if(len(ag.path) != 0):
-    #    if(envir[ag.path[0]] == 5):
-    #        envir[ag.path[0]] = 0
     return envir
 
 
 def update_envir(self, envir):
     envir[self.pos] = 15
-
     if(len(self.path) > 0):
         if(envir[self.path[0]] != 15):
             envir[self.path[0]] = 5
