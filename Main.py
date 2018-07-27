@@ -123,7 +123,6 @@ def step():
 
     for ag in agents:
         envir = envir_reset(ag, envir)
-
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
             ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
@@ -173,7 +172,15 @@ def step():
         #----- Unloading state-----------------------------------------------------------------
         elif(ag.state == "Unloading"):
             ag.gate, gates = free_gate(ag, gates, orders_list)
+            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
             ag.state = state_transaction(ag.state, ag.goal)
+            if(ag.state == "To_Goal"):
+                ag.path = navigation(envir, ag.pos, ag.goal)
+                ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
+            elif(ag.state == "To_Home"):
+                if(ag.pos != ag.init_pos):
+                    ag.path = navigation(envir,ag.pos, ag.init_pos)
+                    ag, agents, envir, data_stats = moving(ag, agents, envir, data_stats)
 
         #----- To_Home state-----------------------------------------------------------------
         elif(ag.state == "To_Home"):

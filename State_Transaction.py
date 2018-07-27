@@ -9,7 +9,8 @@ def state_transaction(state, goal):
     ("To_WaitP", goal) : "Wait",
     ("Loading", goal != (-1, -1)) : "To_Gate",
     ("Loading", goal == (-1, -1)) : "To_WaitP",
-    ("Unloading", goal) : "Free",
+    ("Unloading", goal != (-1, -1)) : "To_Goal",
+    ("Unloading", goal == (-1, -1)): "To_Home",
     ("Home", goal) : "----------------",
     ("Wait", goal) : "To_Gate",
     }
