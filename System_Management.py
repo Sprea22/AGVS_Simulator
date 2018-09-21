@@ -7,7 +7,7 @@ import numpy as np
 # It allows to return different kind of goals considering the behavir type of
 # the AGV within the simultion.
 ##############################################################################
-def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
+def new_goal(ag, orders_list, behavior_type):
     # Cambia in base al behavior type inserito E DISPONIBILITA' GATE
     for index, row in orders_list[orders_list["status"] == 1].iterrows():
         if(sum(row[2:]) == 0):
@@ -41,23 +41,36 @@ def new_goal(ag, orders_list, behavior_type, n_col_per_ag):
 ##############################################################################
 def new_gate(ag, gates):
     if(ag.client == "MI"):
-        lp = gates[0].lp_hold(ag)
+        lp, counters = gates[0].lp_hold(ag)
         gate = 0
     elif(ag.client == "CO"):
-        lp = gates[1].lp_hold(ag)
+        lp, counters = gates[1].lp_hold(ag)
         gate = 1
     elif(ag.client == "FI"):
-        lp = gates[2].lp_hold(ag)
+        lp, counters = gates[2].lp_hold(ag)
         gate = 2
     else:
         print("Error - Client is not existing")
+    gates[gate].lps_counters = counters
     return lp, gate, gates
 
 def free_gate(ag, gates, orders_list):
-    # Se l'ordine è finito, liberalo
+    for idx, loc in enumerate(gates[ag.gate].lps_locations):
+        if(loc == ag.pos):
+            gates[ag.gate].lps_counters[idx] = gates[ag.gate].lps_counters[idx] - 1
     if(orders_list["status"].iloc[ag.info_order] == 2):
-        gates[ag.gate].lp_free(ag.pos)
+        gates[ag.gate].lp_free(ag)
     return ag.gate, gates
+
+    '''
+    else:
+        if(gates[ag.gate].loc_lp1 == ag.pos):
+            gates[ag.gate].lps_counters[0] = gates[ag.gate].lps_counters[0] - 1
+        elif(gates[ag.gate].loc_lp2 == ag.pos):
+            gates[ag.gate].lps_counters[1] = gates[ag.gate].lps_counters[1] - 1
+        elif(gates[ag.gate].loc_lp3 == ag.pos):
+            gates[ag.gate].lps_counters[2] = gates[ag.gate].lps_counters[2] - 1
+        '''
 
 ##############################################################################
 # The "order_location" function allows to map the items location in the environment

@@ -15,21 +15,24 @@ from Data_Stats import *
 from Gate import *
 
 # Default input parameters
-orders_list = pd.read_csv("Utility/Total_Orders.csv", index_col=0)
+orders_list = pd.read_csv("Utility/orders_list_generated_final.csv", index_col=0)
+orders_list = orders_list.iloc[5:]
+orders_list.index = range(0, len(orders_list["client"]))
 time = 0
+N_AGV = 1
 behavior_type = 0
 width = 48; height = 43
-N_AGV = 1
-n_col_per_ag = 3
 total_numb_orders = str(len(orders_list.index))
-agents = []; gates = []; data_stats = []; total_stats = []
+#AGV_colors = ["blue", "coral", "cyan", "salmon", "seagreen", "skyblue", "pink", "yellow"]
+agents = []; gates = []; data_stats = []; timesteps_data_stats = []; total_stats = []; total_stats_cont = 0
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def init():
-    global time, agents, gates, n_col_per_ag, envir, states, orders_list, data_stats, wall_x, wall_y, gate_x, gate_y, total_stats, office_x, office_y
+    global time, agents, gates, envir, states, orders_list, data_stats, total_stats
+    global wall_x, wall_y, gate_x, gate_y, office_x, office_y, charging_x, charging_y
 
     # Initilizing the environement
-    envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y = envir_configuration(width, height)
+    envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y, charging_x, charging_y = envir_configuration(width, height)
 
     # Initilizing the gate objects
     gates.append(Gate(0, (0,31), (0,32), (0,33), (3,29)))
@@ -39,7 +42,7 @@ def init():
     # Initializing the agents
     if(behavior_type == 1):
         for i in range(0, N_AGV):
-            agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i))
+            agents.append(AGV((42, i + 1 + (i*2) ), "darkred", 100 + i))
 
     elif(behavior_type == 2):
         for i in range(0, N_AGV):
@@ -73,23 +76,27 @@ def init():
 ############# ############# ############# ############# #############
 def draw():
     #-----Simulation map plot-----------------------------------------------------------------
-    grid = pl.GridSpec(3, 2, wspace=0.4, hspace=0.3)
+    grid = pl.GridSpec(5, 2, wspace=0.4, hspace=0.3)
     pl.subplot(grid[0:, 0])
     pl.cla()
     pl.pcolor(envir, cmap = pl.cm.YlOrRd, vmin = 0, vmax = 15)
     pl.axis('image')
     pl.hold(True)
+    # Plot the charging location on the matrix
+    pl.scatter(np.add(charging_x, [0.5]), np.add(charging_y, [0.5]), marker = "s", c = 'yellow')
     # Plot the walls on the matrix
     pl.scatter(np.add(wall_x, [0.5]), np.add(wall_y, [0.5]), marker = "s", c = 'gray')
     # Plot the office on the matrix
-    pl.scatter(np.add(office_x, [0.5]), np.add(office_y, [0.5]), marker = "s", c = 'gray')
+    pl.scatter(np.add(office_x, [0.5]), np.add(office_y, [0.5]), marker = "s", c = 'dimgray')
     # Plot the gates on the matrix
     pl.scatter(np.add(gate_x, [0.5]), np.add(gate_y, [0.5]), marker = "s", c = 'green')
     # For each agent plot: location, intention, goal
     for ag in agents:
         # Plot the agent's location on the matrix
         x, y = ag.get_pos()
-        pl.scatter(x + 0.5, y + 0.5, c = "dark" + ag.color)
+        pl.scatter(x + 0.5, y + 0.5, c = ag.color)
+        #if(len(ag.path) > 0):
+        #    pl.scatter(np.add(ag.path[0][1], [0.5]), np.add(ag.path[0][0], [0.5]), marker = "s", c = "light"+ag.color)
         if(len(ag.goal) > 0):
             goals = ag.goal
             # Plot the agent's goal on the matrix
@@ -99,15 +106,20 @@ def draw():
     ax2 = pl.subplot(grid[0, 1])
     ax2.axis("off")
     ax2.invert_yaxis()
-    to_plot_string1 = "\nTotal orders: "+ total_numb_orders + "\nDone orders: "+ str(len(orders_list[orders_list["status"] == 2].index))
+    to_plot_string1 = "Gates counters: "+ str(gates[0].lps_counters) + " | " + str(gates[1].lps_counters) + " | " + str(gates[2].lps_counters)
+    to_plot_string2 = "\nGates orders: "+ str(gates[0].lps) + " | " + str(gates[1].lps) + " | " + str(gates[2].lps)
+    to_plot_string3 = "\n\nTotal orders: "+ total_numb_orders + "\nDone orders: "+ str(len(orders_list[orders_list["status"] == 2].index))
+
     ax2.text(0,0, to_plot_string1, verticalalignment="top")
+    ax2.text(0,0, to_plot_string2, verticalalignment="top")
+    ax2.text(0,0, to_plot_string3, verticalalignment="top")
     #-----1° Stats plot: Articles-----------------------------------------------------------------
-    pl.subplot(grid[1, 1])
+    pl.subplot(grid[2, 1])
     x = range(0, len(total_stats))
     pl.plot(x,  total_stats["Articles"], color = 'blue')
     pl.title('Articles')
     #-----2° Stats plot: Conflicts-----------------------------------------------------------------
-    pl.subplot(grid[2, 1])
+    pl.subplot(grid[4, 1])
     x = range(0, len(total_stats))
     pl.plot(x,  total_stats["Conflicts"], color = 'red')
     pl.title('Conflicts')
@@ -117,15 +129,15 @@ def draw():
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
 def step():
-    global time, agents, n_col_per_ag, gates, envir, orders_list, data_stats, max1, max2, total_stats
+    global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont
+    global wall_x, wall_y, gate_x, gate_y, office_x, office_y
     # New step of time
     time += 1
-
     for ag in agents:
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
-            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
+            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type)
             ag.state = state_transaction(ag.state, ag.goal)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goal)
@@ -172,7 +184,7 @@ def step():
         #----- Unloading state-----------------------------------------------------------------
         elif(ag.state == "Unloading"):
             ag.gate, gates = free_gate(ag, gates, orders_list)
-            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type, n_col_per_ag)
+            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type)
             ag.state = state_transaction(ag.state, ag.goal)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goal)
@@ -198,7 +210,7 @@ def step():
             # If there is a place available in the destination Gate AND there isn't an another AGV waiting for it,
             # just reserve it and calculate the path to that location.
             if(gates[ag.gate].lp_available(ag) and len(gates[ag.gate].AGV_queue) == 0):
-                temp_gate_loc = gates[ag.gate].lp_hold(ag)
+                temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
                 ag.state = state_transaction(ag.state, bool)
@@ -215,7 +227,7 @@ def step():
             # If there is a place available in the destination Gate, just reserve it
             # and calculate the path to that location.
             if(gates[ag.gate].lp_available(ag)):
-                temp_gate_loc = gates[ag.gate].lp_hold(ag)
+                temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
                 gates[ag.gate].AGV_queue.pop(0)
                 ag.path = navigation(envir, ag.pos, temp_gate_loc)
                 ag.state = state_transaction(ag.state, ag.goal)
@@ -230,9 +242,17 @@ def step():
 
     for column in data_stats[data_stats.index != "Total"].columns:
         data_stats.set_value("Total", column, sum(data_stats[data_stats.index != "Total"][column]))
-    total_stats = total_stats.append(data_stats.iloc[-1])
+
+    # Adding the new data_stats_row to the total_stats
+    temp_row_to_add = data_stats.iloc[-1][:-1]
+    total_stats = total_stats.append(temp_row_to_add)
+    temp = list(range(0,len(total_stats["Conflicts"])))
+    total_stats.index = temp
+    # Saving the two CSV files data_stats and total_stats
     csv_name = "BT"+str(behavior_type)+"_AC"+ str(N_AGV)+"_Stats.csv"
+    csv_name_timestep = "TimeSteps_BT"+str(behavior_type)+"_AC"+ str(N_AGV)+"_Stats.csv"
     data_stats.to_csv("Results/"+csv_name)
+    total_stats.to_csv("Results/"+csv_name_timestep)
 
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############

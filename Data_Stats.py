@@ -1,7 +1,7 @@
 import pandas as pd
 
 def init_dataStats(data_stats, total_stats, agents):
-    total_stats = pd.DataFrame(columns=["AGV", "Conflicts", "Conflict_Wait", "Conflict_Path", "Waiting_Gate", "Articles", "Moving_Steps", "Time_Steps"])
+    total_stats = pd.DataFrame(columns=["Conflicts", "Conflict_Wait", "Conflict_Path", "Waiting_Gate", "Articles", "Moving_Steps"])
     data_stats = pd.DataFrame(columns=["AGV", "Conflicts", "Conflict_Wait", "Conflict_Path", "Waiting_Gate", "Articles", "Moving_Steps", "Time_Steps"])
     for i in range(0,len(agents)+1):
         data_stats.loc[i] = 0

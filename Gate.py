@@ -1,10 +1,5 @@
 
 class Gate:
-    lp_one = -1
-    lp_two = -1
-    lp_three = -1
-    AGV_queue = []
-
     # constructor
     def __init__(self, id, loc_lp1, loc_lp2, loc_lp3, queue_loc):
         self.id = id
@@ -12,55 +7,37 @@ class Gate:
         self.loc_lp2 = loc_lp2
         self.loc_lp3 = loc_lp3
         self.queue_loc = queue_loc
+        self.AGV_queue = []
+        self.lps_locations = [loc_lp1, loc_lp2, loc_lp3]
+        self.lps = [-1, -1, -1]
+        self.lps_counters = [0, 0, 0]
 
-    # Ritornare anche la posizione del LP corretto
     def lp_hold(self, ag):
-        if(ag.info_order == self.lp_one):
-            self.lp_one = ag.info_order
-            return self.loc_lp1
+        for idx, val in enumerate(self.lps):
+            if(self.lps_counters[idx] < 5 and ag.info_order == val):
+                self.lps_counters[idx] = self.lps_counters[idx] + 1
+                return self.lps_locations[idx], self.lps_counters
+            elif(val == -1):
+                self.lps[idx] = ag.info_order
+                self.lps_counters[idx] = 1
+                return self.lps_locations[idx], self.lps_counters
+        return (-1, -1), self.lps_counters
 
-        if(ag.info_order == self.lp_two):
-            self.lp_two = ag.info_order
-            return self.loc_lp2
-
-        if(ag.info_order == self.lp_three):
-            self.lp_three = ag.info_order
-            return self.loc_lp3
-
-        if(self.lp_one == -1):
-            self.lp_one = ag.info_order
-            return self.loc_lp1
-
-        elif(self.lp_two == -1):
-            self.lp_two = ag.info_order
-            return self.loc_lp2
-
-        elif(self.lp_three == -1):
-            self.lp_three = ag.info_order
-            return self.loc_lp3
-
-        else:
-            return (-1,-1)
+    def lp_free(self, ag):
+        # In this method the AGV's order is done. (status == 2)
+        for idx, loc in enumerate(self.lps_locations):
+            # If the AGV's is the last one in that gate, let it be free
+            if(self.lps_counters[idx] == 0 and ag.info_order == self.lps[idx]):
+                self.lps[idx] = -1
+        return self
 
     # Ritornare anche la posizione del LP corretto
     def lp_available(self, ag):
-        if(self.lp_one == -1 or ag.info_order == self.lp_one):
+        if(self.lps[0] == -1 or (ag.info_order == self.lps[0] and self.lps_counters[0] < 5)):
             return True
-        elif(self.lp_two == -1  or ag.info_order == self.lp_two):
+        elif(self.lps[1] == -1  or (ag.info_order == self.lps[1] and self.lps_counters[1] < 5)):
             return True
-        elif(self.lp_three == -1  or ag.info_order == self.lp_three):
+        elif(self.lps[2] == -1  or (ag.info_order == self.lps[2] and self.lps_counters[2] < 5)):
             return True
         else:
             return False
-
-    def lp_free(self, pos):
-        if(self.loc_lp1 == pos):
-            self.lp_one = -1
-        elif(self.loc_lp2 == pos):
-            self.lp_two = -1
-        elif(self.loc_lp3 == pos):
-            self.lp_three = -1
-        else:
-            print("Error - The gates are free")
-            return "Error - The gates are free"
-        return self
