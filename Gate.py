@@ -17,10 +17,12 @@ class Gate:
             if(self.lps_counters[idx] < 5 and ag.info_order == val):
                 self.lps_counters[idx] = self.lps_counters[idx] + 1
                 return self.lps_locations[idx], self.lps_counters
-            elif(val == -1):
+        for idx, val in enumerate(self.lps):
+            if(val == -1):
                 self.lps[idx] = ag.info_order
                 self.lps_counters[idx] = 1
                 return self.lps_locations[idx], self.lps_counters
+
         return (-1, -1), self.lps_counters
 
     def lp_free(self, ag):

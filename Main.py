@@ -35,9 +35,9 @@ def init():
     envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y, charging_x, charging_y = envir_configuration(width, height)
 
     # Initilizing the gate objects
-    gates.append(Gate(0, (0,31), (0,32), (0,33), (3,29)))
-    gates.append(Gate(1, (0,37), (0,38), (0,39), (3, 38)))
-    gates.append(Gate(2, (0,43), (0,44), (0,45), (3, 47)))
+    gates.append(Gate(0, (0,31), (0,32), (0,33), (6,29)))
+    gates.append(Gate(1, (0,37), (0,38), (0,39), (6, 38)))
+    gates.append(Gate(2, (0,43), (0,44), (0,45), (6, 47)))
 
     # Initializing the agents
     if(behavior_type == 1):
@@ -50,6 +50,7 @@ def init():
         columns = orders_list.columns[2:]
         n_col = len(columns)
         i = 0
+        cont = 0
         if(n_col > N_AGV):
             for c in columns:
                 if(i < N_AGV):
@@ -59,8 +60,16 @@ def init():
                     i = i + 1
                 else:
                     i = 0
+                    temp = agents[i].id
+                    temp.append(c)
+                    agents[i].id = temp
+                    i = i + 1
+
         else:
             print("Error - Too many AGVs ")
+
+        for ag in agents:
+            print(ag.id)
 
     elif(behavior_type == 3):
         for i in range(0, N_AGV):
