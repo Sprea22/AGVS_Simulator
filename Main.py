@@ -18,9 +18,14 @@ from Gate import *
 from Waiting_Point import *
 
 # Default input parameters
-orders_list = pd.read_csv("Utility/orders_list_generated_final.csv", index_col=0)
-original_orders_list = pd.read_csv("Utility/orders_list_generated_final.csv", index_col=0)
+#orders_list = pd.read_csv("Utility/Def_Orders_List.csv", index_col=0)
+orders_list = pd.read_csv("Utility/Def_Orders_List.csv")
+#original_orders_list = pd.read_csv("Utility/Def_Orders_List.csv", index_col=0)
+original_orders_list = pd.read_csv("Utility/Def_Orders_List.csv")
+
 orders_list.index = range(0, len(orders_list["client"]))
+original_orders_list.index = range(0, len(orders_list["client"]))
+
 time = 0
 N_AGV = 1
 behavior_type = 0
@@ -332,19 +337,23 @@ def step():
         #envir = ag.update_envir(envir, old_params)
         envir = update_envir(ag, envir)
 
-    for column in data_stats[data_stats.index != "Total"].columns:
-        data_stats.set_value("Total", column, sum(data_stats[data_stats.index != "Total"][column]))
-
-    # Adding the new data_stats_row to the total_stats
-    temp_row_to_add = data_stats.iloc[-1][:-1]
-    total_stats = total_stats.append(temp_row_to_add)
-    temp = list(range(0,len(total_stats["Conflicts"])))
-    total_stats.index = temp
-    # Saving the two CSV files data_stats and total_stats
-    csv_name = "BT"+str(behavior_type)+"_A"+ str(N_AGV)+"_Stats.csv"
-    csv_name_timestep = "TimeSteps_BT"+str(behavior_type)+"_A"+ str(N_AGV)+"_Stats.csv"
-    data_stats.to_csv("Results/"+csv_name)
-    total_stats.to_csv("Results/"+csv_name_timestep)
+    completed = True
+    for ag in agents:
+        if(ag.state != "Home"):
+            completed = False
+    if(not(completed)):
+        for column in data_stats[data_stats.index != "Total"].columns:
+            data_stats.set_value("Total", column, sum(data_stats[data_stats.index != "Total"][column]))
+        # Adding the new data_stats_row to the total_stats
+        temp_row_to_add = data_stats.iloc[-1][:-1]
+        total_stats = total_stats.append(temp_row_to_add)
+        temp = list(range(0,len(total_stats["Conflicts"])))
+        total_stats.index = temp
+        # Saving the two CSV files data_stats and total_stats
+        csv_name = "BT"+str(behavior_type)+"_A"+ str(N_AGV)+"_Stats.csv"
+        csv_name_timestep = "TimeSteps_BT"+str(behavior_type)+"_A"+ str(N_AGV)+"_Stats.csv"
+        data_stats.to_csv("Results/"+csv_name)
+        total_stats.to_csv("Results/"+csv_name_timestep)
 
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
