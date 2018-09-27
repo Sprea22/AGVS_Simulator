@@ -31,6 +31,7 @@ N_AGV = 1
 behavior_type = 0
 width = 48; height = 43
 total_numb_orders = str(len(orders_list.index))
+working_agvs = [0] * len(orders_list["status"])
 #AGV_colors = ["blue", "coral", "cyan", "salmon", "seagreen", "skyblue", "pink", "yellow"]
 agents = []; gates = []; waiting_points = []; data_stats = []; timesteps_data_stats = []; total_stats = []; total_stats_cont = 0
 #------------------------------------------------------------------------------
@@ -54,11 +55,11 @@ def init():
     # Initializing the agents
     if(behavior_type == 1):
         for i in range(0, N_AGV):
-            agents.append(AGV((42, i + 1 + (i*2) ), "darkred", 100 + i))
+            agents.append(AGV((42, i + 1 + (i*2) ), "darkred", 100 + i, []))
 
     elif(behavior_type == 2):
         for i in range(0, N_AGV):
-            agents.append(AGV((42, i + 1 + (i*2) ),"red", ["client", "status"]))
+            agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i, ["client", "status"]))
         columns = orders_list.columns[2:]
         n_col = len(columns)
         i = 0
@@ -66,26 +67,23 @@ def init():
         if(n_col > N_AGV):
             for c in columns:
                 if(i < N_AGV):
-                    temp = agents[i].id
+                    temp = agents[i].articles_priority
                     temp.append(c)
-                    agents[i].id = temp
+                    agents[i].articles_priority = temp
                     i = i + 1
                 else:
                     i = 0
-                    temp = agents[i].id
+                    temp = agents[i].articles_priority
                     temp.append(c)
-                    agents[i].id = temp
+                    agents[i].articles_priority = temp
                     i = i + 1
 
         else:
             print("Error - Too many AGVs ")
 
-        for ag in agents:
-            print(ag.id)
-
     elif(behavior_type == 3):
         for i in range(0, N_AGV):
-            agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i))
+            agents.append(AGV((42, i + 1 + (i*2) ),"red", 100 + i, []))
     else:
         print("Error - Behavior_Type is not existing.")
 
@@ -212,16 +210,18 @@ def draw():
 
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
+
 def step():
-    global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont
+    global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs
     global wall_x, wall_y, gate_x, gate_y, office_x, office_y
     # New step of time
     time += 1
+
     for ag in agents:
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
-            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type)
+            ag.goal, ag.client, ag.info_order, orders_list, working_agvs = new_goal(ag, orders_list, behavior_type, working_agvs)
             ag.state = state_transaction(ag.state, ag.goal)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goal)
@@ -272,8 +272,9 @@ def step():
 
         #----- Unloading state-----------------------------------------------------------------
         elif(ag.state == "Unloading"):
-            ag.gate, gates = free_gate(ag, gates, orders_list)
-            ag.goal, ag.client, ag.info_order, orders_list = new_goal(ag, orders_list, behavior_type)
+            ag.gate, gates = free_gate(ag, gates, orders_list, working_agvs)
+            # Cambia in base al behavior type inserito E DISPONIBILITA' GATE
+            ag.goal, ag.client, ag.info_order, orders_list, working_agvs = new_goal(ag, orders_list, behavior_type, working_agvs)
             ag.state = state_transaction(ag.state, ag.goal)
             if(ag.state == "To_Goal"):
                 ag.path = navigation(envir, ag.pos, ag.goal)

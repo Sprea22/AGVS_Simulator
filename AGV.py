@@ -10,14 +10,17 @@ class AGV:
     gate = -1
     info_order = -1
     goal = (-1, -1)
+    articles_priority = []
 
     # constructor
-    def __init__(self, pos, color, id):
+    def __init__(self, pos, color, id, articles_priority):
         # agent default initialization
         self.id = id
         self.pos = pos
         self.init_pos = pos
         self.color = color
+        self.articles_priority = articles_priority
+
 
     def get_pos(self):
         return self.pos[1], self.pos[0]

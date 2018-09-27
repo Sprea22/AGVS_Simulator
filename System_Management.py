@@ -7,12 +7,11 @@ import numpy as np
 # It allows to return different kind of goals considering the behavir type of
 # the AGV within the simultion.
 ##############################################################################
-def new_goal(ag, orders_list, behavior_type):
+def new_goal(ag, orders_list, behavior_type, working_agvs):
     # Cambia in base al behavior type inserito E DISPONIBILITA' GATE
-    for index, row in orders_list[orders_list["status"] == 1].iterrows():
-        if(sum(row[2:]) == 0):
-            orders_list["status"].iloc[index] = 2
-
+    if(ag.info_order != -1):
+        if(working_agvs[ag.info_order] > 0):
+            working_agvs[ag.info_order] = working_agvs[ag.info_order] - 1
     if(not(orders_list.loc[orders_list["status"] != 2].empty)):
         info_order = -1
 
@@ -28,10 +27,16 @@ def new_goal(ag, orders_list, behavior_type):
             order, client, orders_list, index = getGoal(ag, orders_list)
             info_order = index
 
-        return  order, client, info_order, orders_list
+        if (sum(orders_list[orders_list.columns[2:]].iloc[ag.info_order]) == 0):
+            orders_list["status"].iloc[ag.info_order] = 2
+
+        if(info_order != -1):
+            working_agvs[info_order] = working_agvs[info_order] + 1
+
+        return  order, client, info_order, orders_list, working_agvs
 
     else:
-        return (-1, -1), '', -1, orders_list
+        return (-1, -1), '', -1, orders_list, working_agvs
 
 ##############################################################################
 # The "new_gate" function is used by the AGV in order to get the gate location
@@ -54,23 +59,15 @@ def new_gate(ag, gates):
     gates[gate].lps_counters = counters
     return lp, gate, gates
 
-def free_gate(ag, gates, orders_list):
+def free_gate(ag, gates, orders_list, working_agvs):
     for idx, loc in enumerate(gates[ag.gate].lps_locations):
         if(loc == ag.pos):
             gates[ag.gate].lps_counters[idx] = gates[ag.gate].lps_counters[idx] - 1
-    if(orders_list["status"].iloc[ag.info_order] == 2):
+    if(orders_list["status"].iloc[ag.info_order] == 2 and working_agvs[ag.info_order] == 1):
         gates[ag.gate].lp_free(ag)
+#    if((cont - sum(orders_list[orders_list.columns[2:]].iloc[ag.info_order]) + gates[ag.gate].lps_counters[position] == 0) and (gates[ag.gate].lps_counters[position] == 0)):
+#        gates[ag.gate].lps[position] = -1
     return ag.gate, gates
-
-    '''
-    else:
-        if(gates[ag.gate].loc_lp1 == ag.pos):
-            gates[ag.gate].lps_counters[0] = gates[ag.gate].lps_counters[0] - 1
-        elif(gates[ag.gate].loc_lp2 == ag.pos):
-            gates[ag.gate].lps_counters[1] = gates[ag.gate].lps_counters[1] - 1
-        elif(gates[ag.gate].loc_lp3 == ag.pos):
-            gates[ag.gate].lps_counters[2] = gates[ag.gate].lps_counters[2] - 1
-        '''
 
 ##############################################################################
 # The "order_location" function allows to map the items location in the environment
@@ -119,8 +116,8 @@ def getGoal_1(ag, orders_list):
 
 def getGoal_2(ag, orders_list):
     # Si può mettere nell'inizializzazione degli AGV una volta sola nel main
-    order, client, window_orders_list, index = getGoal(ag, orders_list[ag.id])
-    orders_list[ag.id] = window_orders_list
+    order, client, window_orders_list, index = getGoal(ag, orders_list[ag.articles_priority])
+    orders_list[ag.articles_priority] = window_orders_list
     return order, client, orders_list, index
 
 def getGoal(ag, window_orders_list):

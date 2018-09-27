@@ -22,7 +22,6 @@ class Gate:
                 self.lps[idx] = ag.info_order
                 self.lps_counters[idx] = 1
                 return self.lps_locations[idx], self.lps_counters
-
         return (-1, -1), self.lps_counters
 
     def lp_free(self, ag):
