@@ -12,6 +12,7 @@ def new_goal(ag, orders_list, behavior_type, working_agvs):
     if(ag.info_order != -1):
         if(working_agvs[ag.info_order] > 0):
             working_agvs[ag.info_order] = working_agvs[ag.info_order] - 1
+
     if(not(orders_list.loc[orders_list["status"] != 2].empty)):
         info_order = -1
 
@@ -27,8 +28,8 @@ def new_goal(ag, orders_list, behavior_type, working_agvs):
             order, client, orders_list, index = getGoal(ag, orders_list)
             info_order = index
 
-        if (sum(orders_list[orders_list.columns[2:]].iloc[ag.info_order]) == 0):
-            orders_list["status"].iloc[ag.info_order] = 2
+        if (sum(orders_list[orders_list.columns[2:]].iloc[info_order]) == 0):
+            orders_list["status"].iloc[info_order] = 2
 
         if(info_order != -1):
             working_agvs[info_order] = working_agvs[info_order] + 1

@@ -12,7 +12,7 @@ def state_transaction(state, goal):
     ("Unloading", goal != (-1, -1)) : "To_Goal",
     ("Unloading", goal == (-1, -1)): "To_Home",
     ("Home", goal) : "----------------",
-    ("Wait", goal) : "To_Gate",
+    ("Wait", not(goal)) : "To_Gate",
     }
 
     for i in map_transaction.keys():

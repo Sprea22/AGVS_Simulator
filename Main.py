@@ -3,6 +3,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pylab as pl
 import warnings
+import numpy as np
 matplotlib.use('TkAgg')
 warnings.filterwarnings("ignore")
 
@@ -206,17 +207,52 @@ def draw():
     ax8.clear()
     ax8.axis("off")
     ax8.table(cellText=cell_text, cellLoc='center', loc=top)
+
+
     plt.show()
+
+############# ############# ############# ############# #############
+############# ############# ############# ############# #############
+
+def get_out_waiting_point(ag, waiting_points, gates):
+    temp_wait_point_0 = np.array(waiting_points[0].waiting_order[:])
+    temp_wait_point_1 = np.array(waiting_points[1].waiting_order[:])
+
+    temp_wait_point_0[temp_wait_point_0 == -1] = 1000;
+    temp_wait_point_1[temp_wait_point_1 == -1] = 1000;
+
+    wait_value_0 = np.min(temp_wait_point_0)# wait_idx_0 = np.argmin(temp_wait_point_0)
+    wait_value_1 = np.min(temp_wait_point_1)# wait_idx_1 = np.argmin(temp_wait_point_1)
+
+    if(wait_value_0 < wait_value_1):
+        if(ag.id in waiting_points[0].waiting_agv and (gates[ag.gate].AGV_queue == 0 or ag.info_order == wait_value_0)):
+            waiting_points[0], _ = waiting_points[0].free_waiting_location(ag)
+            temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
+            gates[ag.gate].AGV_queue.pop(0)
+            ag.path = navigation(envir, ag.pos, temp_gate_loc)
+            ag.state = state_transaction(ag.state, False)
+            return ag, waiting_points, gates
+    else:
+        if(ag.id in waiting_points[1].waiting_agv and (gates[ag.gate].AGV_queue == 0 or ag.info_order == wait_value_1)):
+            waiting_points[1], _ = waiting_points[1].free_waiting_location(ag)
+            temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
+            gates[ag.gate].AGV_queue.pop(0)
+            ag.path = navigation(envir, ag.pos, temp_gate_loc)
+            ag.state = state_transaction(ag.state, False)
+            return ag, waiting_points, gates
+    return ag, waiting_points, gates
 
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
 
 def step():
     global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs
-    global wall_x, wall_y, gate_x, gate_y, office_x, office_y
+    global wall_x, wall_y, gate_x, gate_y, office_x, office_y, waiting_points
     # New step of time
     time += 1
-
+    orders_list_temp = orders_list[:]
+    table = orders_list_temp[1:20]
+    table.to_csv("Temporaneo_tiprego_salvami.csv")
     for ag in agents:
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
@@ -299,15 +335,9 @@ def step():
             bool = (ag.pos in waiting_points[0].waiting_locations or ag.pos in waiting_points[1].waiting_locations)
             # If there is a place available in the destination Gate AND there isn't an another AGV waiting for it,
             # just reserve it and calculate the path to that location.
-            if(gates[ag.gate].lp_available(ag) and len(gates[ag.gate].AGV_queue) == 0):
-                if(ag.id in waiting_points[0].waiting_agv):
-                    waiting_points[0], _ = waiting_points[0].free_waiting_location(ag)
-                else:
-                    waiting_points[1], _ = waiting_points[1].free_waiting_location(ag)
-                temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
-                gates[ag.gate].AGV_queue.pop(0)
-                ag.path = navigation(envir, ag.pos, temp_gate_loc)
-                ag.state = state_transaction(ag.state, bool)
+            # Get out from the waiting point?
+            if(gates[ag.gate].lp_available(ag)):
+                ag, waiting_points, gates = get_out_waiting_point(ag, waiting_points, gates)
             # Move to the waiting location of the destination gate
             elif(not(gates[ag.gate].lp_available(ag)) or len(gates[ag.gate].AGV_queue) != 0):
                 if(len(ag.path) > 0):
@@ -321,14 +351,7 @@ def step():
             # If there is a place available in the destination Gate, just reserve it
             # and calculate the path to that location.
             if(gates[ag.gate].lp_available(ag)):
-                if(ag.id in waiting_points[0].waiting_agv):
-                    waiting_points[0], _ = waiting_points[0].free_waiting_location(ag)
-                else:
-                    waiting_points[1], _ = waiting_points[1].free_waiting_location(ag)
-                temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
-                gates[ag.gate].AGV_queue.pop(0)
-                ag.path = navigation(envir, ag.pos, temp_gate_loc)
-                ag.state = state_transaction(ag.state, ag.goal)
+                ag, waiting_points, gates= get_out_waiting_point(ag, waiting_points, gates)
         else:
             #----- To_Home state-----------------------------------------------------------------
             if(ag.state != "Home"):
