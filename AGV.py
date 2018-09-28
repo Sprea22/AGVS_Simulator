@@ -42,6 +42,16 @@ class AGV:
         # OUTPUT: the new path with the current position ahead
 # reset the pos_temp environment location to free
     def conflict_handler(self, envir):
+        gates = [(0,31), (0,32),(0,33), (0,37), (0,38),
+                (0,39), (0,43), (0,44), (0,45)]
+        goals = [(18,5),(24,6),(30,5),(36,6)
+                ,(18,10),(24,11),(30,10),(36,11)
+                ,(18,15),(24,16),(30,15),(36,16)
+                ,(18,20),(24,21),(30,20),(36,21)
+                ,(18,25),(24,26),(30,25),(36,26)
+                ,(18,30),(24,31),(30,30),(36,31)
+                ,(18,35),(24,36),(30,35),(36,36)
+                ,(18,40),(24,41),(30,40),(36,41)]
         # Data stats: no conflict
         conflict_bool = 0
         # The following three values are used to restore the "temp walls" created
@@ -61,7 +71,7 @@ class AGV:
                 conflict_path = navigation(envir, self.pos, self.path[1])
                 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
                 while not(path_okay):
-                    if(envir[conflict_path[0]] == 15):
+                    if(envir[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
                         temp_reset.append(conflict_path[0])
                         val_temp_reset.append(envir[conflict_path[0]])
                         envir[conflict_path[0]] = 0.01
