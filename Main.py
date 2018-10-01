@@ -253,7 +253,9 @@ def step():
     orders_list_temp = orders_list[:]
     table = orders_list_temp[1:20]
     table.to_csv("Temporaneo_tiprego_salvami.csv")
+    print("-----------", time, "--------------------------------")
     for ag in agents:
+        print(ag.id, ag.pos)
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):

@@ -71,15 +71,21 @@ class AGV:
                 conflict_path = navigation(envir, self.pos, self.path[1])
                 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
                 while not(path_okay):
-                    if(envir[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
-                        temp_reset.append(conflict_path[0])
-                        val_temp_reset.append(envir[conflict_path[0]])
-                        envir[conflict_path[0]] = 0.01
-                        conflict_path = navigation(envir, self.pos, self.path[1])
-                    else:
+                    print(path_okay, conflict_path)
+                    if(conflict_path is None):
+                        self.path = [self.pos] + self.path
                         path_okay = True
+                    else:
+                        if(envir[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
+                            temp_reset.append(conflict_path[0])
+                            val_temp_reset.append(envir[conflict_path[0]])
+                            envir[conflict_path[0]] = 0.01
+                            conflict_path = navigation(envir, self.pos, self.path[1])
+                        else:
+                            path_okay = True
                 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-                self.path = conflict_path[0:len(conflict_path)-1] + self.path[1:]
+                if(conflict_path is not None):
+                    self.path = conflict_path[0:len(conflict_path)-1] + self.path[1:]
             else:
                 self.path = [self.pos] + self.path
 
