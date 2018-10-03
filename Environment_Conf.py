@@ -1,7 +1,7 @@
 import scipy as sp
 import numpy as np
 def envir_configuration(width, height):
-    envir = sp.zeros([height, width])
+    envir = np.zeros([height, width])
 
     ################################
     # WALLS, OFFICE, GATE configuration #

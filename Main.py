@@ -251,11 +251,22 @@ def step():
     # New step of time
     time += 1
     orders_list_temp = orders_list[:]
-    table = orders_list_temp[1:20]
-    table.to_csv("Temporaneo_tiprego_salvami.csv")
-    print("-----------", time, "--------------------------------")
+    table = orders_list_temp[160:195]
+    table.to_csv("Temporaneo_tiprego_salvami_BT2AGV12.csv")
+    print("|||||||||", time, "||||||||||||||||||||||||||||||||||||")
     for ag in agents:
+        print("--------------------------------------")
         print(ag.id, ag.pos)
+        print("Left waiting points waiting AGV and waiting ORDERS")
+        print(waiting_points[0].waiting_agv, waiting_points[0].waiting_order)
+        print("Right waiting points waiting AGV and waiting ORDERS")
+        print(waiting_points[1].waiting_agv, waiting_points[1].waiting_order)
+        print("Orders and AGV counters in gates 0")
+        print(gates[0].lps, gates[0].lps_counters)
+        print("Orders and AGV counters in gates 1")
+        print(gates[1].lps, gates[1].lps_counters)
+        print("Orders and AGV counters in gates 2")
+        print(gates[2].lps, gates[2].lps_counters)
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):

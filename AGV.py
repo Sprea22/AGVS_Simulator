@@ -42,6 +42,7 @@ class AGV:
         # OUTPUT: the new path with the current position ahead
 # reset the pos_temp environment location to free
     def conflict_handler(self, envir):
+        print("CONFLITTO!!!!!!!!!!! Devo risolvere la path: ", self.path)
         gates = [(0,31), (0,32),(0,33), (0,37), (0,38),
                 (0,39), (0,43), (0,44), (0,45)]
         goals = [(18,5),(24,6),(30,5),(36,6)
@@ -56,42 +57,55 @@ class AGV:
         conflict_bool = 0
         # The following three values are used to restore the "temp walls" created
         # around the current AGV
-        temp_reset = []
-        val_temp_reset = []
-        path_okay = False
-        pos_temp = self.path[0]
-        envir_temp = envir[pos_temp]
-        if(envir[self.path[0]] == 15):
+        print("Devo andare in: ", self.goal)
+        x = sum(sum(envir))
+        print("Valore envir: ", x)
+        envir_temp = np.copy(envir)
+        if(envir_temp[self.path[0]] == 15):
             # Data stats: conflict and wait
             conflict_bool = 1
-            envir[self.path[0]] = 0.01
+            envir_temp[self.path[0]] = 0.01
+            # If the AGV path is longer than 1, you're not reaching the goal so
+            # you can try to recalculate the path.
             if(len(self.path) > 1):
                 # Data stats: conflict and path change
                 conflict_bool = 2
-                conflict_path = navigation(envir, self.pos, self.path[1])
-                ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-                while not(path_okay):
-                    print(path_okay, conflict_path)
-                    if(conflict_path is None):
-                        self.path = [self.pos] + self.path
-                        path_okay = True
-                    else:
-                        if(envir[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
-                            temp_reset.append(conflict_path[0])
-                            val_temp_reset.append(envir[conflict_path[0]])
-                            envir[conflict_path[0]] = 0.01
-                            conflict_path = navigation(envir, self.pos, self.path[1])
+                # Calculate how many times a single AGV can recalculate the conflict path
+                conflict_count = 1
+                if(len(self.path) > 3):
+                    conf_calc_max = 3
+                else:
+                    conf_calc_max = len(self.path) - 1
+                # Initialize the conflict path to empty path []
+                conflict_path = None
+                # Calculate the conflict path until the bool is trues
+                while(conflict_count < conf_calc_max and conflict_path == None):
+                    conflict_path = navigation(envir_temp, self.pos, self.path[conflict_count])
+                    if(conflict_path is not None):
+                        if(envir_temp[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
+                            envir_temp[conflict_path[0]] = 0.01
+                            conflict_count = conflict_count + 1
                         else:
-                            path_okay = True
-                ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-                if(conflict_path is not None):
-                    self.path = conflict_path[0:len(conflict_path)-1] + self.path[1:]
+                            break
+                    else:
+                        conflict_count = conflict_count + 1
+
+                if(conflict_path is None):
+                    self.path = [self.pos] + self.path
+                else:
+                    self.path = conflict_path[0:len(conflict_path)-1] + self.path[conflict_count:]
+            # It means that your next step is the goal. Just wait
             else:
                 self.path = [self.pos] + self.path
-
-        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-        for i in range(0, len(temp_reset)):
-            envir[temp_reset[i]] = val_temp_reset[i]
-        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-        envir[pos_temp] = envir_temp
+        y = sum(sum(envir))
+        print("Valore envir: ", y)
+        if(x != y):
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
+            print("//////////////////////////////////////////////////////")
         return self.path, conflict_bool
