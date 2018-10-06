@@ -42,7 +42,6 @@ class AGV:
         # OUTPUT: the new path with the current position ahead
 # reset the pos_temp environment location to free
     def conflict_handler(self, envir):
-        print("CONFLITTO!!!!!!!!!!! Devo risolvere la path: ", self.path)
         gates = [(0,31), (0,32),(0,33), (0,37), (0,38),
                 (0,39), (0,43), (0,44), (0,45)]
         goals = [(18,5),(24,6),(30,5),(36,6)
@@ -57,9 +56,7 @@ class AGV:
         conflict_bool = 0
         # The following three values are used to restore the "temp walls" created
         # around the current AGV
-        print("Devo andare in: ", self.goal)
         x = sum(sum(envir))
-        print("Valore envir: ", x)
         envir_temp = np.copy(envir)
         if(envir_temp[self.path[0]] == 15):
             # Data stats: conflict and wait
@@ -71,11 +68,11 @@ class AGV:
                 # Data stats: conflict and path change
                 conflict_bool = 2
                 # Calculate how many times a single AGV can recalculate the conflict path
-                conflict_count = 1
-                if(len(self.path) > 3):
-                    conf_calc_max = 3
-                else:
-                    conf_calc_max = len(self.path) - 1
+                conflict_count = 0
+                #if(len(self.path) > 3):
+                #    conf_calc_max =
+                #else:
+                conf_calc_max = len(self.path)
                 # Initialize the conflict path to empty path []
                 conflict_path = None
                 # Calculate the conflict path until the bool is trues
@@ -89,23 +86,13 @@ class AGV:
                             break
                     else:
                         conflict_count = conflict_count + 1
-
                 if(conflict_path is None):
                     self.path = [self.pos] + self.path
+                    print("Stai fermo", self.path)
                 else:
-                    self.path = conflict_path[0:len(conflict_path)-1] + self.path[conflict_count:]
+                    self.path = conflict_path + self.path[conflict_count:]
+                    print("Cambia la tua path in", self.path)
             # It means that your next step is the goal. Just wait
             else:
                 self.path = [self.pos] + self.path
-        y = sum(sum(envir))
-        print("Valore envir: ", y)
-        if(x != y):
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
-            print("//////////////////////////////////////////////////////")
         return self.path, conflict_bool

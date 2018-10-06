@@ -214,34 +214,6 @@ def draw():
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
 
-def get_out_waiting_point(ag, waiting_points, gates):
-    temp_wait_point_0 = np.array(waiting_points[0].waiting_order[:])
-    temp_wait_point_1 = np.array(waiting_points[1].waiting_order[:])
-
-    temp_wait_point_0[temp_wait_point_0 == -1] = 1000;
-    temp_wait_point_1[temp_wait_point_1 == -1] = 1000;
-
-    wait_value_0 = np.min(temp_wait_point_0)# wait_idx_0 = np.argmin(temp_wait_point_0)
-    wait_value_1 = np.min(temp_wait_point_1)# wait_idx_1 = np.argmin(temp_wait_point_1)
-
-    if(wait_value_0 < wait_value_1):
-        if(ag.id in waiting_points[0].waiting_agv and (gates[ag.gate].AGV_queue == 0 or ag.info_order == wait_value_0)):
-            waiting_points[0], _ = waiting_points[0].free_waiting_location(ag)
-            temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
-            gates[ag.gate].AGV_queue.pop(0)
-            ag.path = navigation(envir, ag.pos, temp_gate_loc)
-            ag.state = state_transaction(ag.state, False)
-            return ag, waiting_points, gates
-    else:
-        if(ag.id in waiting_points[1].waiting_agv and (gates[ag.gate].AGV_queue == 0 or ag.info_order == wait_value_1)):
-            waiting_points[1], _ = waiting_points[1].free_waiting_location(ag)
-            temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
-            gates[ag.gate].AGV_queue.pop(0)
-            ag.path = navigation(envir, ag.pos, temp_gate_loc)
-            ag.state = state_transaction(ag.state, False)
-            return ag, waiting_points, gates
-    return ag, waiting_points, gates
-
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
 
@@ -251,12 +223,13 @@ def step():
     # New step of time
     time += 1
     orders_list_temp = orders_list[:]
-    table = orders_list_temp[160:195]
+    table = orders_list_temp[0:195]
     table.to_csv("Temporaneo_tiprego_salvami_BT2AGV12.csv")
     print("|||||||||", time, "||||||||||||||||||||||||||||||||||||")
     for ag in agents:
         print("--------------------------------------")
-        print(ag.id, ag.pos)
+        print(ag.id, ag.pos, ag.state)
+        '''
         print("Left waiting points waiting AGV and waiting ORDERS")
         print(waiting_points[0].waiting_agv, waiting_points[0].waiting_order)
         print("Right waiting points waiting AGV and waiting ORDERS")
@@ -267,6 +240,7 @@ def step():
         print(gates[1].lps, gates[1].lps_counters)
         print("Orders and AGV counters in gates 2")
         print(gates[2].lps, gates[2].lps_counters)
+        '''
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
@@ -293,7 +267,7 @@ def step():
 
         #----- Loading state-----------------------------------------------------------------
         elif(ag.state == "Loading"):
-            lp, ag.gate, gates = new_gate(ag, gates)
+            lp, ag.gate, gates = new_gate(ag, orders_list, agents, gates)
             ag.state = state_transaction(ag.state, lp)
             # If there's a free location at the destination gate, just navigate to it.
             if(ag.state == "To_Gate"):
@@ -349,8 +323,16 @@ def step():
             # If there is a place available in the destination Gate AND there isn't an another AGV waiting for it,
             # just reserve it and calculate the path to that location.
             # Get out from the waiting point?
-            if(gates[ag.gate].lp_available(ag)):
-                ag, waiting_points, gates = get_out_waiting_point(ag, waiting_points, gates)
+
+            # The bool2 condition means if the current agv has a priority order or not.
+            bool2, temp_wp = get_out_waiting_point(ag, agents, waiting_points, gates, orders_list, envir)
+            if(gates[ag.gate].lp_available(ag) and bool2):
+            # If the current AGV has a priority order and there is an available location, just hold it.
+                waiting_points[temp_wp], _ = waiting_points[temp_wp].free_waiting_location(ag)
+                temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
+                gates[ag.gate].AGV_queue.pop(0)
+                ag.path = navigation(envir, ag.pos, temp_gate_loc)
+                ag.state = state_transaction(ag.state, False)
             # Move to the waiting location of the destination gate
             elif(not(gates[ag.gate].lp_available(ag)) or len(gates[ag.gate].AGV_queue) != 0):
                 if(len(ag.path) > 0):
@@ -363,8 +345,19 @@ def step():
             data_stats = data_wait_gate(data_stats, ag, agents)
             # If there is a place available in the destination Gate, just reserve it
             # and calculate the path to that location.
-            if(gates[ag.gate].lp_available(ag)):
-                ag, waiting_points, gates= get_out_waiting_point(ag, waiting_points, gates)
+
+            # The bool condition means if the current agv has a priority order or not.
+            bool, temp_wp = get_out_waiting_point(ag, agents, waiting_points, gates, orders_list, envir)
+            # If the current AGV has a priority order and there is an available location, just hold it.
+            print(gates[ag.gate].lp_available(ag), bool)
+            print(ag.info_order)
+            if(gates[ag.gate].lp_available(ag) and bool):
+                    waiting_points[temp_wp], _ = waiting_points[temp_wp].free_waiting_location(ag)
+                    temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)
+                    gates[ag.gate].AGV_queue.pop(0)
+                    ag.path = navigation(envir, ag.pos, temp_gate_loc)
+                    ag.state = state_transaction(ag.state, False)
+
         else:
             #----- To_Home state-----------------------------------------------------------------
             if(ag.state != "Home"):

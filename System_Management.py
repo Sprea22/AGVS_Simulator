@@ -2,6 +2,8 @@ import random as rd
 import pandas as pd
 import numpy as np
 
+from Navigation import *
+
 ##############################################################################
 # The "new_goal" function is used by the free AGV in order to get new goals
 # It allows to return different kind of goals considering the behavir type of
@@ -45,18 +47,27 @@ def new_goal(ag, orders_list, behavior_type, working_agvs):
 # INPUT: agent, in particular ag.client that contains the current client for the agent
 # OUTPUT: gate location
 ##############################################################################
-def new_gate(ag, gates):
+def new_gate(ag, orders_list, agents, gates):
+    temp_priority_order, orders_in_gate = get_priority_order(ag, orders_list, agents, gates)
+    lp = (-1, -1)
     if(ag.client == "MI"):
-        lp, counters = gates[0].lp_hold(ag)
         gate = 0
+        counters = gates[0].lps_counters
+        if(temp_priority_order == ag.info_order or ag.info_order in gates[0].lps):
+            lp, counters = gates[0].lp_hold(ag)
     elif(ag.client == "CO"):
-        lp, counters = gates[1].lp_hold(ag)
         gate = 1
+        counters = gates[1].lps_counters
+        if(temp_priority_order == ag.info_order or ag.info_order in gates[1].lps):
+            lp, counters = gates[1].lp_hold(ag)
     elif(ag.client == "FI"):
-        lp, counters = gates[2].lp_hold(ag)
         gate = 2
+        counters = gates[2].lps_counters
+        if(temp_priority_order == ag.info_order or ag.info_order in gates[2].lps):
+            lp, counters = gates[2].lp_hold(ag)
     else:
         print("Error - Client is not existing")
+    print("Dopo new_gate devo andare in ", gate, lp)
     gates[gate].lps_counters = counters
     return lp, gate, gates
 
@@ -134,3 +145,49 @@ def getGoal(ag, window_orders_list):
                         window_orders_list[column].iloc[index] -= 1
                         return order, client, window_orders_list, index
         return (-1, -1), '', window_orders_list, -1
+
+
+##############################################################################################################################
+##############################################################################################################################
+##############################################################################################################################
+
+def get_priority_order(current_ag, orders_list, agents, gates):
+    working_orders = []
+    orders_in_gate = []
+    current_orders = orders_list[orders_list["status"] != 2]
+    current_orders = current_orders[current_orders["client"] == current_ag.client].index.values
+    # Trovi gli id degli ordini con lo stesso client
+    for temp_ag in agents:
+        if(temp_ag.client == current_ag.client):
+            working_orders.append(temp_ag.info_order)
+    # Unisci gli ID degli ordini ancora da fare con quelli che sono in corso dagi agv
+    current_orders = np.append(current_orders, working_orders)
+    # Non considerare quelli che hanno già occupato una porta
+    for val in gates[current_ag.gate].lps:
+        orders_in_gate.append(val)
+        current_orders = np.delete(current_orders, np.where(current_orders == val))
+    # Tra quelli che aspettano e quelli che sono ancora da fare (dello stesso cliente)
+    # imposta a priority_order quello con id minore.
+    if(current_orders != []):
+        priority_order = np.min(current_orders)
+    else:
+        priority_order = -1
+    return priority_order, orders_in_gate
+
+def get_out_waiting_point(current_ag, agents, waiting_points, gates, orders_list, envir):
+    priority_order, orders_in_gate = get_priority_order(current_ag, orders_list, agents, gates)
+    # If the current agv has an order that someone else is already doing in a gate, just go,
+    # and return True and the Waiting location number
+    if(current_ag.info_order in orders_in_gate):
+        if(current_ag.id in waiting_points[0].waiting_agv):
+            return True, 0
+        elif(current_ag.id in waiting_points[1].waiting_agv):
+            return True, 1
+    else:
+            if(current_ag.info_order == priority_order):
+                if(current_ag.id in waiting_points[0].waiting_agv):
+                    return True, 0
+                elif(current_ag.id in waiting_points[1].waiting_agv):
+                    return True, 1
+            else:
+                return False, -1
