@@ -39,10 +39,10 @@ agents = []; gates = []; waiting_points = []; data_stats = []; timesteps_data_st
 #------------------------------------------------------------------------------
 def init():
     global time, agents, gates, envir, states, orders_list, data_stats, total_stats
-    global wall_x, wall_y, gate_x, gate_y, office_x, office_y, charging_x, charging_y
+    global envir, gates_locs, wall_locs, office_locs, charging_locs, waiting_points
 
     # Initilizing the environement
-    envir, wall_x, wall_y, gate_x, gate_y, office_x, office_y, charging_x, charging_y = envir_configuration(width, height)
+    envir, gates_locs, wall_locs, office_locs, charging_locs = envir_configuration(width, height)
 
     # Initilizing the waiting_points
     waiting_points.append(Waiting_Point(0, (6, 33)))
@@ -98,34 +98,40 @@ def draw():
     #-----Simulation map plot-----------------------------------------------------------------
     left  = 0.06; right = 0.96; bottom = 0.06; top = 1.00; wspace = 0.2; hspace = 0.2
     plt.subplots_adjust(left, bottom, right, top, wspace, hspace)
-
     gs1 = gridspec.GridSpec(8, 8)
+
+    # Main subplot: environment matrix
     ax0 = plt.subplot(gs1[0:8, 0:4])
-
+    # Orders graphic: Done and To do orders barplot
     ax1 = plt.subplot(gs1[3:5, 5:8])
+    # Conflicts graphic: conflict type linear graphic
     ax2 = plt.subplot(gs1[6:8, 5:8])
-
+    # left waiting point: AGV IDs waiting table
     ax4 = plt.subplot(gs1[1, 5])
+    # Waiting tables title
     ax5 = plt.subplot(gs1[1, 7])
-    ax9 = plt.subplot(gs1[1, 6])
+    # Right waiting point: AGV IDs waiting table
+    ax6 = plt.subplot(gs1[1, 6])
+    # left gate: Orders IDs that are currently holding the gate location
+    ax7 = plt.subplot(gs1[2, 5])
+    # Midlle gate: Orders IDs that are currently holding the gate locationMidlle
+    ax8 = plt.subplot(gs1[2, 6])
+    # Right gate: Orders IDs that are currently holding the gate location
+    ax9 = plt.subplot(gs1[2, 7])
 
-    ax6 = plt.subplot(gs1[2, 5])
-    ax7 = plt.subplot(gs1[2, 6])
-    ax8 = plt.subplot(gs1[2, 7])
-
-    #-----Matrix Simulator Graphic -----------------------------------------------------------------
+    #-----# ax0 # ---Matrix Simulator Graphic -----------------------------------------------------------------
     ax0.pcolor(envir, cmap = pl.cm.YlOrRd, vmin = 0, vmax = 15)
     ax0.axis("image")
     ax0.set_xlim([0,47])
     ax0.set_ylim([0,43])
     # Plot the charging location on the matrix
-    ax0.scatter(np.add(charging_x, [0.5]), np.add(charging_y, [0.5]), marker = "s", c = 'yellow')
+    ax0.scatter(np.add([loc[1] for loc in charging_locs], [0.5]), np.add([loc[0] for loc in charging_locs], [0.5]), marker = "s", c = 'yellow')
     # Plot the walls on the matrix
-    ax0.scatter(np.add(wall_x, [0.5]), np.add(wall_y, [0.5]), marker = "s", c = 'gray')
+    ax0.scatter(np.add([loc[1] for loc in wall_locs], [0.5]), np.add([loc[0] for loc in wall_locs], [0.5]), marker = "s", c = 'gray')
     # Plot the office on the matrix
-    ax0.scatter(np.add(office_x, [0.5]), np.add(office_y, [0.5]), marker = "s", c = 'dimgray')
+    ax0.scatter(np.add([loc[1] for loc in office_locs], [0.5]), np.add([loc[0] for loc in office_locs], [0.5]), marker = "s", c = 'dimgray')
     # Plot the gates on the matrix
-    ax0.scatter(np.add(gate_x, [0.5]), np.add(gate_y, [0.5]), marker = "s", c = 'green')
+    ax0.scatter(np.add([loc[1] for loc in gates_locs], [0.5]), np.add([loc[0] for loc in gates_locs], [0.5]), marker = "s", c = 'green')
     # For each agent plot: location, intention, goal
     for ag in agents:
         # Plot the agent's location on the matrix
@@ -137,7 +143,7 @@ def draw():
             if(not(goals[1] == -1 and goals[0] == -1)):
                 ax0.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
 
-    #-----1° Stats plot: Conflicts-----------------------------------------------------------------
+    #-----# ax1 # ---1° Stats plot: Conflicts-----------------------------------------------------------------
     orders_total_bar = []; orders_progress_bar = []; indexes = []
     cont = 0
     for i in orders_list[orders_list["status"] == 1].index:
@@ -159,7 +165,8 @@ def draw():
             temp_indexes.append(str(i))
         plt.sca(ax2)
         plt.xticks(range(len(indexes)), temp_indexes)
-    #-----2° Stats plot: Conflicts-----------------------------------------------------------------
+
+    #-----# ax2 # --- 2° Stats plot: Conflicts-----------------------------------------------------------------
     if(time != 0):
         ax2.clear()
         x = range(0, len(total_stats))
@@ -168,7 +175,7 @@ def draw():
         c3 = ax2.plot(x,  total_stats["Conflict_Path"], color = 'green')
         ax2.legend((c1[0], c2[0], c3[0]), ("Total Conflicts", "Conflict Waiting", "Conflict Path"), loc='lower right')
 
-    #-----Stats text: Orders -----------------------------------------------------------------
+    #-----# ax4, ax5, ax6 # --- Waiting points tables -----------------------------------------------------------------
     cell_1 = [waiting_points[0].waiting_agv[0], waiting_points[0].waiting_agv[2], waiting_points[0].waiting_agv[4]]
     cell_2 = [waiting_points[0].waiting_agv[1], waiting_points[0].waiting_agv[3], waiting_points[0].waiting_agv[5]]
     cell_text = [["-" if x==-1 else x for x in cell_2], ["-" if x==-1 else x for x in cell_1]]
@@ -181,33 +188,34 @@ def draw():
     cell_text = [["-" if x==-1 else x for x in cell_2], ["-" if x==-1 else x for x in cell_1]]
     ax5.clear()
     ax5.axis("off")
-    ax9.clear()
-    ax9.axis("off")
-    ax9.set_title("Waiting locations status")
     ax5.table(cellText=cell_text, cellLoc='center', loc=top)
 
-    cell_text = gates[0].lps
-    cell_text = ["-" if x==-1 else x for x in cell_text]
-    cell_text = [cell_text]
     ax6.clear()
     ax6.axis("off")
-    ax6.table(cellText=cell_text, cellLoc='center', loc=top)
+    ax6.set_title("Waiting locations status")
 
-    cell_text = gates[1].lps
+    #-----# ax7, ax8, ax9 # --- Gates status tables -----------------------------------------------------------------
+    cell_text = gates[0].lps
     cell_text = ["-" if x==-1 else x for x in cell_text]
     cell_text = [cell_text]
     ax7.clear()
     ax7.axis("off")
-    ax7.set_title("Gates status")
     ax7.table(cellText=cell_text, cellLoc='center', loc=top)
 
-    cell_text = gates[2].lps
+    cell_text = gates[1].lps
     cell_text = ["-" if x==-1 else x for x in cell_text]
     cell_text = [cell_text]
     ax8.clear()
     ax8.axis("off")
+    ax8.set_title("Gates status")
     ax8.table(cellText=cell_text, cellLoc='center', loc=top)
 
+    cell_text = gates[2].lps
+    cell_text = ["-" if x==-1 else x for x in cell_text]
+    cell_text = [cell_text]
+    ax9.clear()
+    ax9.axis("off")
+    ax9.table(cellText=cell_text, cellLoc='center', loc=top)
 
     plt.show()
 
@@ -215,32 +223,28 @@ def draw():
 ############# ############# ############# ############# #############
 
 ############# ############# ############# ############# #############
+def debug_print(agents, time, orders_list):
+        print("-----", time, "-------------------------------")
+        print(ag.id, ag.pos, ag.state)
+        table = orders_list_temp[0:195]
+        table.to_csv("Orders_status_debug.csv")
+############# ############# ############# ############# #############
+
+############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
 
 def step():
+    debug = False
     global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs
-    global wall_x, wall_y, gate_x, gate_y, office_x, office_y, waiting_points
+    global envir, gates_locs, wall_locs, office_locs, charging_locs, waiting_points
+
+
     # New step of time
     time += 1
     orders_list_temp = orders_list[:]
-    table = orders_list_temp[0:195]
-    table.to_csv("Temporaneo_tiprego_salvami_BT2AGV12.csv")
-    print("|||||||||", time, "||||||||||||||||||||||||||||||||||||")
     for ag in agents:
-        print("--------------------------------------")
-        print(ag.id, ag.pos, ag.state)
-        '''
-        print("Left waiting points waiting AGV and waiting ORDERS")
-        print(waiting_points[0].waiting_agv, waiting_points[0].waiting_order)
-        print("Right waiting points waiting AGV and waiting ORDERS")
-        print(waiting_points[1].waiting_agv, waiting_points[1].waiting_order)
-        print("Orders and AGV counters in gates 0")
-        print(gates[0].lps, gates[0].lps_counters)
-        print("Orders and AGV counters in gates 1")
-        print(gates[1].lps, gates[1].lps_counters)
-        print("Orders and AGV counters in gates 2")
-        print(gates[2].lps, gates[2].lps_counters)
-        '''
+        if(debug == True):
+            debug_print(agents, time, orders_list)
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
@@ -274,12 +278,10 @@ def step():
                 ag.path = navigation(envir, ag.pos, lp)
             # If all the gate's locations are busy, just go to the gate's queue
             elif(ag.state == "To_WaitP"):
-################ ################ ################ ################################ ################ ################ ################
                 if(waiting_points[0].free_spots() >= waiting_points[1].free_spots()):
                     waiting_points[0], waiting_loc, _ = waiting_points[0].hold_waiting_location(ag)
                 else:
                     waiting_points[1], waiting_loc, _ = waiting_points[1].hold_waiting_location(ag)
-################ ################ ################ ################################ ################ ################ ################
                 gates[ag.gate].AGV_queue.append(ag)
                 ag.path = navigation(envir, ag.pos, waiting_loc)
 

@@ -1,6 +1,8 @@
 import numpy as np
 import random as rd
 from Navigation import navigation
+from Environment_Conf import goals_location
+from Environment_Conf import gates_location
 
 class AGV:
     # agent default variables initialization
@@ -8,8 +10,9 @@ class AGV:
     client = ''
     path = []
     gate = -1
-    info_order = -1
     goal = (-1, -1)
+    info_order = -1
+    # Just if it's BT2, otherwise []
     articles_priority = []
 
     # constructor
@@ -20,7 +23,6 @@ class AGV:
         self.init_pos = pos
         self.color = color
         self.articles_priority = articles_priority
-
 
     def get_pos(self):
         return self.pos[1], self.pos[0]
@@ -42,16 +44,8 @@ class AGV:
         # OUTPUT: the new path with the current position ahead
 # reset the pos_temp environment location to free
     def conflict_handler(self, envir):
-        gates = [(0,31), (0,32),(0,33), (0,37), (0,38),
-                (0,39), (0,43), (0,44), (0,45)]
-        goals = [(18,5),(24,6),(30,5),(36,6)
-                ,(18,10),(24,11),(30,10),(36,11)
-                ,(18,15),(24,16),(30,15),(36,16)
-                ,(18,20),(24,21),(30,20),(36,21)
-                ,(18,25),(24,26),(30,25),(36,26)
-                ,(18,30),(24,31),(30,30),(36,31)
-                ,(18,35),(24,36),(30,35),(36,36)
-                ,(18,40),(24,41),(30,40),(36,41)]
+        gates = gates_location()
+        goals = goals_location()
         # Data stats: no conflict
         conflict_bool = 0
         # The following three values are used to restore the "temp walls" created
@@ -88,10 +82,8 @@ class AGV:
                         conflict_count = conflict_count + 1
                 if(conflict_path is None):
                     self.path = [self.pos] + self.path
-                    print("Stai fermo", self.path)
                 else:
                     self.path = conflict_path + self.path[conflict_count:]
-                    print("Cambia la tua path in", self.path)
             # It means that your next step is the goal. Just wait
             else:
                 self.path = [self.pos] + self.path
