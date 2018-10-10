@@ -151,7 +151,6 @@ class GUI:
                 self.showHelp(ent,variableSetter.__doc__.strip())
 
             ent.pack(side='left')
-
             can.pack(side='top')
 
             self.varEntries[variableSetter]=ent

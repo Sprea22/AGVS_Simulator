@@ -143,7 +143,7 @@ def draw():
             if(not(goals[1] == -1 and goals[0] == -1)):
                 ax0.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
 
-    #-----# ax1 # ---1° Stats plot: Conflicts-----------------------------------------------------------------
+    #-----# ax1 # ---1° Stats plot: Orders done and to do -----------------------------------------------------------------
     orders_total_bar = []; orders_progress_bar = []; indexes = []
     cont = 0
     for i in orders_list[orders_list["status"] == 1].index:
@@ -157,15 +157,12 @@ def draw():
         N = len(orders_progress_bar)
         width = 0.35       # the width of the bars: can also be len(x) sequence
         ax1.clear()
-        p1 = ax1.bar(np.arange(len(indexes)), orders_total_bar, width, color='red')
-        p2 = ax1.bar(np.arange(len(orders_total_bar)), orders_progress_bar, width, color = "green", bottom=0)
-        ax1.legend((p1[0], p2[0]), ('To Do', 'Done') , loc='upper right')
         temp_indexes = []
         for i in indexes:
             temp_indexes.append(str(i))
-        plt.sca(ax2)
-        plt.xticks(range(len(indexes)), temp_indexes)
-
+        p1 = ax1.bar(np.arange(len(indexes)), orders_total_bar, width, color='red', tick_label = temp_indexes)
+        p2 = ax1.bar(np.arange(len(orders_total_bar)), orders_progress_bar, width, color = "green", bottom=0)
+        ax1.legend((p1[0], p2[0]), ('To Do', 'Done') , loc='upper right')
     #-----# ax2 # --- 2° Stats plot: Conflicts-----------------------------------------------------------------
     if(time != 0):
         ax2.clear()
@@ -237,7 +234,6 @@ def step():
     debug = False
     global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs
     global envir, gates_locs, wall_locs, office_locs, charging_locs, waiting_points
-
 
     # New step of time
     time += 1
@@ -351,8 +347,6 @@ def step():
             # The bool condition means if the current agv has a priority order or not.
             bool, temp_wp = get_out_waiting_point(ag, agents, waiting_points, gates, orders_list, envir)
             # If the current AGV has a priority order and there is an available location, just hold it.
-            print(gates[ag.gate].lp_available(ag), bool)
-            print(ag.info_order)
             if(gates[ag.gate].lp_available(ag) and bool):
                     waiting_points[temp_wp], _ = waiting_points[temp_wp].free_waiting_location(ag)
                     temp_gate_loc, gates[ag.gate].lps_counters = gates[ag.gate].lp_hold(ag)

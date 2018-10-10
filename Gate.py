@@ -35,7 +35,6 @@ class Gate:
 
     # Ritornare anche la posizione del LP corretto
     def lp_available(self, ag):
-
         if(self.lps[0] == -1 or (ag.info_order == self.lps[0] and self.lps_counters[0] < 5)):
             return True
         elif(self.lps[1] == -1  or (ag.info_order == self.lps[1] and self.lps_counters[1] < 5)):

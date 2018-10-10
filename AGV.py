@@ -52,6 +52,7 @@ class AGV:
         # around the current AGV
         x = sum(sum(envir))
         envir_temp = np.copy(envir)
+
         if(envir_temp[self.path[0]] == 15):
             # Data stats: conflict and wait
             conflict_bool = 1
@@ -75,6 +76,7 @@ class AGV:
                     if(conflict_path is not None):
                         if(envir_temp[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
                             envir_temp[conflict_path[0]] = 0.01
+                            conflict_path = None
                             conflict_count = conflict_count + 1
                         else:
                             break
