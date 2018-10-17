@@ -64,26 +64,39 @@ class AGV:
                 conflict_bool = 2
                 # Calculate how many times a single AGV can recalculate the conflict path
                 conflict_count = 0
+                conflict_count_b = 0
                 #if(len(self.path) > 3):
                 #    conf_calc_max =
                 #else:
                 conf_calc_max = len(self.path)
                 # Initialize the conflict path to empty path []
                 conflict_path = None
+                conflict_path_b = None
                 # Calculate the conflict path until the bool is trues
                 while(conflict_count < conf_calc_max and conflict_path == None):
                     conflict_path = navigation(envir_temp, self.pos, self.path[conflict_count])
                     if(conflict_path is not None):
-                        if(envir_temp[conflict_path[0]] == 15 or conflict_path[0] in gates or conflict_path[0] in goals):
+                        if(envir_temp[conflict_path[0]] == 15):
                             envir_temp[conflict_path[0]] = 0.01
                             conflict_path = None
                             conflict_count = conflict_count + 1
                         else:
-                            break
+                            if(conflict_path[0] in gates or conflict_path[0] in goals):
+                                conflict_path_b = conflict_path
+                                conflict_count_b = conflict_count
+                                envir_temp[conflict_path[0]] = 0.01
+                                conflict_path = None
+                                conflict_count = conflict_count + 1
+                            else:
+                                break
                     else:
                         conflict_count = conflict_count + 1
+
                 if(conflict_path is None):
-                    self.path = [self.pos] + self.path
+                    if(conflict_path_b is None):
+                        self.path = [self.pos] + self.path
+                    else:
+                        self.path = conflict_path_b + self.path[conflict_count_b:]
                 else:
                     self.path = conflict_path + self.path[conflict_count:]
             # It means that your next step is the goal. Just wait

@@ -27,6 +27,7 @@ original_orders_list = pd.read_csv("Utility/Def_Orders_List.csv")
 orders_list.index = range(0, len(orders_list["client"]))
 original_orders_list.index = range(0, len(orders_list["client"]))
 
+completed = False
 time = 0
 N_AGV = 1
 behavior_type = 0
@@ -120,29 +121,38 @@ def draw():
     ax9 = plt.subplot(gs1[2, 7])
 
     #-----# ax0 # ---Matrix Simulator Graphic -----------------------------------------------------------------
-    ax0.pcolor(envir, cmap = pl.cm.YlOrRd, vmin = 0, vmax = 15)
+    ax0.pcolor(envir, cmap = pl.cm.YlOrRd, vmin = 0, vmax = 0)
     ax0.axis("image")
     ax0.set_xlim([0,47])
     ax0.set_ylim([0,43])
     # Plot the charging location on the matrix
-    ax0.scatter(np.add([loc[1] for loc in charging_locs], [0.5]), np.add([loc[0] for loc in charging_locs], [0.5]), marker = "s", c = 'yellow')
+    m1 = ax0.scatter(np.add([loc[1] for loc in charging_locs], [0.5]), np.add([loc[0] for loc in charging_locs], [0.5]), marker = "s", c = 'yellow')
     # Plot the walls on the matrix
-    ax0.scatter(np.add([loc[1] for loc in wall_locs], [0.5]), np.add([loc[0] for loc in wall_locs], [0.5]), marker = "s", c = 'gray')
+    m2 = ax0.scatter(np.add([loc[1] for loc in wall_locs], [0.5]), np.add([loc[0] for loc in wall_locs], [0.5]), marker = "s", c = 'gray')
     # Plot the office on the matrix
-    ax0.scatter(np.add([loc[1] for loc in office_locs], [0.5]), np.add([loc[0] for loc in office_locs], [0.5]), marker = "s", c = 'dimgray')
+    ax0.scatter(np.add([loc[1] for loc in office_locs], [0.5]), np.add([loc[0] for loc in office_locs], [0.5]), marker = "s", c = 'gray')
     # Plot the gates on the matrix
-    ax0.scatter(np.add([loc[1] for loc in gates_locs], [0.5]), np.add([loc[0] for loc in gates_locs], [0.5]), marker = "s", c = 'green')
+    m3 = ax0.scatter(np.add([loc[1] for loc in gates_locs], [0.5]), np.add([loc[0] for loc in gates_locs], [0.5]), marker = "s", c = 'green')
     # For each agent plot: location, intention, goal
     for ag in agents:
         # Plot the agent's location on the matrix
+        m5 = ax0.scatter(-1, -1, marker = "s", c = "orange")
+        if(len(ag.path) > 0 and ag.path[0] != ag.pos):
+            y, x = ag.get_intent()
+            m5 = ax0.scatter(x + 0.5, y + 0.5, marker = "s", c = "orange")
+    for ag in agents:
         x, y = ag.get_pos()
-        ax0.scatter(x + 0.5, y + 0.5, c = ag.color)
+        m4 = ax0.scatter(x + 0.5, y + 0.5, c = "black")
+        m6 = ax0.scatter(-1, -1, marker = "x", c = "green")
+
         if(len(ag.goal) > 0):
             goals = ag.goal
             # Plot the agent's goal on the matrix
             if(not(goals[1] == -1 and goals[0] == -1)):
-                ax0.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
+                m6 = ax0.scatter(goals[1] + 0.5, goals[0] + 0.5, marker = "x", c = "green")
 
+    if(time > 0):
+        ax0.legend((m1, m2, m3, m4, m5, m6), ('Charging spots', 'Walls', "Gates", "AGV", "AGV intent", "AGV Goal"), loc='lower left')
     #-----# ax1 # ---1° Stats plot: Orders done and to do -----------------------------------------------------------------
     orders_total_bar = []; orders_progress_bar = []; indexes = []
     cont = 0
@@ -162,6 +172,8 @@ def draw():
             temp_indexes.append(str(i))
         p1 = ax1.bar(np.arange(len(indexes)), orders_total_bar, width, color='red', tick_label = temp_indexes)
         p2 = ax1.bar(np.arange(len(orders_total_bar)), orders_progress_bar, width, color = "green", bottom=0)
+        ax1.set_ylabel("Number of articles")
+        ax1.set_title("Orders progress")
         ax1.legend((p1[0], p2[0]), ('To Do', 'Done') , loc='upper right')
     #-----# ax2 # --- 2° Stats plot: Conflicts-----------------------------------------------------------------
     if(time != 0):
@@ -170,6 +182,7 @@ def draw():
         c1 = ax2.plot(x,  total_stats["Conflicts"], color = 'red')
         c2 = ax2.plot(x,  total_stats["Conflict_Wait"], color = 'blue')
         c3 = ax2.plot(x,  total_stats["Conflict_Path"], color = 'green')
+        ax2.set_title("Number of conflicts")
         ax2.legend((c1[0], c2[0], c3[0]), ("Total Conflicts", "Conflict Waiting", "Conflict Path"), loc='lower right')
 
     #-----# ax4, ax5, ax6 # --- Waiting points tables -----------------------------------------------------------------
@@ -232,7 +245,7 @@ def debug_print(agents, time, orders_list):
 
 def step():
     debug = False
-    global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs
+    global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs, completed
     global envir, gates_locs, wall_locs, office_locs, charging_locs, waiting_points
 
     # New step of time
@@ -363,10 +376,6 @@ def step():
         #envir = ag.update_envir(envir, old_params)
         envir = update_envir(ag, envir)
 
-    completed = True
-    for ag in agents:
-        if(ag.state != "Home"):
-            completed = False
     if(not(completed)):
         for column in data_stats[data_stats.index != "Total"].columns:
             data_stats.set_value("Total", column, sum(data_stats[data_stats.index != "Total"][column]))
@@ -378,8 +387,13 @@ def step():
         # Saving the two CSV files data_stats and total_stats
         csv_name = "BT"+str(behavior_type)+"_A"+ str(N_AGV)+"_Stats.csv"
         csv_name_timestep = "TimeSteps_BT"+str(behavior_type)+"_A"+ str(N_AGV)+"_Stats.csv"
-        data_stats.to_csv("Results/"+csv_name)
-        total_stats.to_csv("Results/"+csv_name_timestep)
+        data_stats.to_csv("Results/"+csv_name, sep=';')
+        total_stats.to_csv("Results/"+csv_name_timestep, sep=';')
+
+    completed = True
+    for ag in agents:
+        if(ag.state != "Home"):
+            completed = False
 
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
