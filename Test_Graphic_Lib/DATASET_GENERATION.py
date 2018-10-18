@@ -5,7 +5,7 @@ import glob
 path = "Total/*.csv"
 db = pd.DataFrame()
 for name in glob.glob(path):
-    file = pd.read_csv(name)
+    file = pd.read_csv(name, sep=';')
     file = file.iloc[0:len(file)-1]
     file_length = len(file["Conflicts"])
     BT_name = name[6:9]
@@ -22,7 +22,7 @@ db.to_csv("TOTAL_agv_stats_dataset.csv")
 path = "Total/*.csv"
 db = pd.DataFrame()
 for name in glob.glob(path):
-    file = pd.read_csv(name).iloc[-1].drop("AGV")
+    file = pd.read_csv(name, sep=";").iloc[-1].drop("AGV")
     BT_name = name[6:9]
     N_AGV_name = name[10:][:-10]
     file["Conf"] = BT_name+"_"+N_AGV_name
@@ -36,7 +36,7 @@ db.to_csv("TOTAL_stats_dataset.csv", index=False)
 path = "Timesteps/*.csv"
 db = pd.DataFrame()
 for name in glob.glob(path):
-    file = pd.read_csv(name)
+    file = pd.read_csv(name, sep=";")
     file_length = len(file["Conflicts"])
     BT_name = name[20:23]
     N_AGV_name = name[24:][:-10]

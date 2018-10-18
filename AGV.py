@@ -30,7 +30,18 @@ class AGV:
     def get_intent(self):
         return self.path[0]
 
-
+    def get_neighborhood(self, envir):
+        results = []
+        curr_position = self.get_pos()
+        for x_t in [-1, +1]:
+            for y_t in [-1, +1]:
+                #
+                # ERRORE QUANDO IL CONFLICT è SUL BORDO DELLA MATRICE
+                # QUINDI BISOGNA CONTROLLARE CHE LA POSIZIONE (SOMMATA) ESISTA
+                #
+                if(envir[curr_position[0] + x_t, curr_position[1] + y_t] == 15):
+                    results.append(list(curr_position[0] + x_t, curr_position[1] + y_t))
+        return results
 #######################################################################
 ###### Conflict Handler method ######
 #######################################################################
@@ -57,10 +68,18 @@ class AGV:
             # Data stats: conflict and wait
             conflict_bool = 1
             envir_temp[self.path[0]] = 0.01
+
+            print(sum(sum(envir_temp)))
+            neighborhood = self.get_neighborhood(envir_temp)
+            if(neighborhood != []):
+                for pos in neighborhood:
+                    envir_temp[pos] = 0.01
+            print(sum(sum(envir_temp)))
+
             # If the AGV path is longer than 1, you're not reaching the goal so
             # you can try to recalculate the path.
             if(len(self.path) > 1):
-                # Data stats: conflict and path change
+
                 conflict_bool = 2
                 # Calculate how many times a single AGV can recalculate the conflict path
                 conflict_count = 0
@@ -75,6 +94,7 @@ class AGV:
                 # Calculate the conflict path until the bool is trues
                 while(conflict_count < conf_calc_max and conflict_path == None):
                     conflict_path = navigation(envir_temp, self.pos, self.path[conflict_count])
+
                     if(conflict_path is not None):
                         if(envir_temp[conflict_path[0]] == 15):
                             envir_temp[conflict_path[0]] = 0.01
