@@ -32,16 +32,21 @@ class AGV:
 
     def get_neighborhood(self, envir):
         results = []
-        curr_position = self.get_pos()
-        for x_t in [-1, +1]:
-            for y_t in [-1, +1]:
+        curr_position = self.get_pos()[::-1]
+        for x_t in [-1, 0, +1]:
+            for y_t in [-1, 0, +1]:
                 #
                 # ERRORE QUANDO IL CONFLICT è SUL BORDO DELLA MATRICE
                 # QUINDI BISOGNA CONTROLLARE CHE LA POSIZIONE (SOMMATA) ESISTA
                 #
-                if(envir[curr_position[0] + x_t, curr_position[1] + y_t] == 15):
-                    results.append(list(curr_position[0] + x_t, curr_position[1] + y_t))
+                try:
+                    position = envir[curr_position[0] + x_t, curr_position[1] + y_t]
+                    if(position == 15 or position == 5):
+                        results.append((curr_position[0] + x_t, curr_position[1] + y_t))
+                except IndexError:
+                    pass
         return results
+
 #######################################################################
 ###### Conflict Handler method ######
 #######################################################################
@@ -67,18 +72,21 @@ class AGV:
         if(envir_temp[self.path[0]] == 15):
             # Data stats: conflict and wait
             conflict_bool = 1
-            envir_temp[self.path[0]] = 0.01
 
-            print(sum(sum(envir_temp)))
             neighborhood = self.get_neighborhood(envir_temp)
-            if(neighborhood != []):
-                for pos in neighborhood:
-                    envir_temp[pos] = 0.01
-            print(sum(sum(envir_temp)))
+            for pos in neighborhood:
+                envir_temp[pos] = 0.01
 
             # If the AGV path is longer than 1, you're not reaching the goal so
             # you can try to recalculate the path.
             if(len(self.path) > 1):
+                if(self.id == 100 or self.id == 104):
+                    print("#{#{#{#{#{#{#{#{#{#{##{#{#{#{#{#{#{#{#{#{#")
+                    print(self.id, " : ", self.path)
+                    print("----------------")
+                    print("Il mio vicinato è: ", neighborhood)
+                    for zeta in neighborhood:
+                        print(zeta, " _ ", envir_temp[zeta])
 
                 conflict_bool = 2
                 # Calculate how many times a single AGV can recalculate the conflict path
@@ -114,6 +122,7 @@ class AGV:
 
                 if(conflict_path is None):
                     if(conflict_path_b is None):
+                        conflict_bool = 1
                         self.path = [self.pos] + self.path
                     else:
                         self.path = conflict_path_b + self.path[conflict_count_b:]
@@ -122,4 +131,7 @@ class AGV:
             # It means that your next step is the goal. Just wait
             else:
                 self.path = [self.pos] + self.path
+            if(self.id == 100 or self.id == 104):
+                print("Risolta in: ")
+                print(self.path)
         return self.path, conflict_bool
