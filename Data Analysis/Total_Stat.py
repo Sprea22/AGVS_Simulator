@@ -20,14 +20,17 @@ series2_origin = series2[:]
 count = 0
 configurations = ["BT1_A3", "BT2_A3", "BT3_A3", "BT1_A6", "BT2_A6", "BT3_A6", "BT1_A9", "BT2_A9", "BT3_A9", "BT1_A12", "BT2_A12", "BT3_A12"]
 configurations_order = ["BT1_A3", "BT1_A6", "BT1_A9", "BT1_A12", "BT2_A3", "BT2_A6", "BT2_A9", "BT2_A12", "BT3_A3", "BT3_A6", "BT3_A9", "BT3_A12"]
-parameters = ["Conflicts","Conflict_Wait","Conflict_Path","Waiting_Gate","Articles","Moving_Steps","Time_Steps"]
+parameters = ["Articles","Conflict_Path","Conflict_Wait","Conflicts","Moving_Steps","Time_Steps","Waiting_Gate"]
 
+print(series2)
 series2 = series2.set_index(["Conf"]).reindex(configurations_order)
+print(series2)
 
 for param in parameters:
     series2[param].plot(kind='bar', align="edge")
     pyplot.xticks(rotation='horizontal', horizontalalignment='left')
     name_fig = "Output_Graphics/Total/Total_" + param + ".jpg"
-    pyplot.title(param + ": Total stats of different configurations")
+    pyplot.title(param + " : Total stats of different configurations")
     pyplot.savefig(name_fig, format="jpg")
+    pyplot.close()
     #pyplot.show()
