@@ -80,14 +80,6 @@ class AGV:
             # If the AGV path is longer than 1, you're not reaching the goal so
             # you can try to recalculate the path.
             if(len(self.path) > 1):
-                if(self.id == 100 or self.id == 104):
-                    print("#{#{#{#{#{#{#{#{#{#{##{#{#{#{#{#{#{#{#{#{#")
-                    print(self.id, " : ", self.path)
-                    print("----------------")
-                    print("Il mio vicinato è: ", neighborhood)
-                    for zeta in neighborhood:
-                        print(zeta, " _ ", envir_temp[zeta])
-
                 conflict_bool = 2
                 # Calculate how many times a single AGV can recalculate the conflict path
                 conflict_count = 0
@@ -131,7 +123,4 @@ class AGV:
             # It means that your next step is the goal. Just wait
             else:
                 self.path = [self.pos] + self.path
-            if(self.id == 100 or self.id == 104):
-                print("Risolta in: ")
-                print(self.path)
         return self.path, conflict_bool

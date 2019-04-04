@@ -232,17 +232,6 @@ def draw():
 ############# ############# ############# ############# #############
 ############# ############# ############# ############# #############
 
-############# ############# ############# ############# #############
-def debug_print(agents, time, orders_list):
-        print("-----", time, "-------------------------------")
-        print(ag.id, ag.pos, ag.state)
-        table = orders_list_temp[0:195]
-        table.to_csv("Orders_status_debug.csv")
-############# ############# ############# ############# #############
-
-############# ############# ############# ############# #############
-############# ############# ############# ############# #############
-
 def step():
     debug = False
     global time, agents, gates, envir, states, orders_list, data_stats, total_stats, total_stats_cont, working_agvs, completed
@@ -252,8 +241,6 @@ def step():
     time += 1
     orders_list_temp = orders_list[:]
     for ag in agents:
-        if(debug == True):
-            debug_print(agents, time, orders_list)
         envir = envir_reset(ag, envir)
         #-----Free State-----------------------------------------------------------------
         if(ag.state == "Free"):
