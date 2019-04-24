@@ -1,0 +1,8 @@
+AGV;Conflicts;Conflict_Wait;Conflict_Path;Waiting_Gate;Articles;Moving_Steps;Time_Steps
+0;1;0;1;0;1;90;0
+1;0;0;0;0;1;90;0
+2;1;0;1;0;1;89;0
+3;2;0;2;0;1;88;0
+4;1;0;1;37;0;53;0
+5;1;0;1;0;1;89;0
+Total;6;0;6;37;5;499;0
